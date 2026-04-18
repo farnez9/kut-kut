@@ -1,4 +1,5 @@
 import type { Layer } from "./layer.ts";
+import { assertUniqueLayerNames } from "./validate.ts";
 
 export type SceneMeta = {
 	name: string;
@@ -26,7 +27,11 @@ const DEFAULT_META: SceneMeta = {
 	duration: 10,
 };
 
-export const createScene = (options: CreateSceneOptions = {}): Scene => ({
-	meta: { ...DEFAULT_META, ...options.meta },
-	layers: options.layers ?? [],
-});
+export const createScene = (options: CreateSceneOptions = {}): Scene => {
+	const layers = options.layers ?? [];
+	assertUniqueLayerNames(layers);
+	return {
+		meta: { ...DEFAULT_META, ...options.meta },
+		layers,
+	};
+};

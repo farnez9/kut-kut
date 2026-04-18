@@ -1,9 +1,9 @@
 import type { Property } from "../reactive/property.ts";
-import { findNodeById } from "../scene/find.ts";
+import { findNodeById, findNodeByPath } from "../scene/find.ts";
 import type { Node } from "../scene/node.ts";
 import type { Scene } from "../scene/scene.ts";
 import { evaluateTrack } from "./evaluate.ts";
-import type { Timeline, Track } from "./types.ts";
+import { isTrackTargetByPath, type Timeline, type Track } from "./types.ts";
 
 const isNumberProperty = (value: unknown): value is Property<number> => {
 	if (value === null || typeof value !== "object") return false;
@@ -22,10 +22,15 @@ const resolveProperty = (node: Node, path: string): Property<number> | undefined
 	return isNumberProperty(current) ? current : undefined;
 };
 
+const resolveTargetNode = (scene: Scene, track: Track): Node | undefined =>
+	isTrackTargetByPath(track.target)
+		? findNodeByPath(scene, track.target.nodePath)
+		: findNodeById(scene, track.target.nodeId);
+
 const applyTrack = (scene: Scene, track: Track, time: number): void => {
 	const value = evaluateTrack(track, time);
 	if (value === undefined) return;
-	const node = findNodeById(scene, track.target.nodeId);
+	const node = resolveTargetNode(scene, track);
 	if (!node) return;
 	const property = resolveProperty(node, track.target.property);
 	if (!property) return;

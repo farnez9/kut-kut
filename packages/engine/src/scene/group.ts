@@ -1,6 +1,7 @@
 import type { Node } from "./node.ts";
 import { NodeType } from "./node-type.ts";
 import type { Transform } from "./transform.ts";
+import { assertUniqueChildNames } from "./validate.ts";
 
 export type Group = {
 	readonly id: string;
@@ -17,10 +18,15 @@ export type CreateGroupOptions = {
 	children?: Node[];
 };
 
-export const createGroup = (options: CreateGroupOptions): Group => ({
-	id: options.id ?? crypto.randomUUID(),
-	type: NodeType.Group,
-	name: options.name ?? "Group",
-	transform: options.transform,
-	children: options.children ?? [],
-});
+export const createGroup = (options: CreateGroupOptions): Group => {
+	const name = options.name ?? "Group";
+	const children = options.children ?? [];
+	assertUniqueChildNames(name, children);
+	return {
+		id: options.id ?? crypto.randomUUID(),
+		type: NodeType.Group,
+		name,
+		transform: options.transform,
+		children,
+	};
+};

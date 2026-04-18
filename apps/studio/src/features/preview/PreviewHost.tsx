@@ -15,7 +15,6 @@ import { usePlayback } from "../playback/index.ts";
 export type PreviewHostProps = {
 	scene: Scene;
 	timeline: Timeline;
-	drive?: (time: number, width: number, height: number) => void;
 };
 
 export const PreviewHost = (props: PreviewHostProps): JSX.Element => {
@@ -56,9 +55,7 @@ export const PreviewHost = (props: PreviewHostProps): JSX.Element => {
 
 	createEffect(() => {
 		const t = playback.time();
-		const { width, height } = size();
 		applyTimeline(props.scene, props.timeline, t);
-		props.drive?.(t, width, height);
 	});
 
 	onCleanup(() => {

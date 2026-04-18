@@ -8,6 +8,7 @@ import {
 	type Transform3D,
 	type Transform3DInit,
 } from "./transform.ts";
+import { assertUniqueChildNames } from "./validate.ts";
 
 export type Scene2DLayer = {
 	readonly id: string;
@@ -41,18 +42,28 @@ export type CreateLayer3DOptions = {
 	children?: Node[];
 };
 
-export const createLayer2D = (options: CreateLayer2DOptions = {}): Scene2DLayer => ({
-	id: options.id ?? crypto.randomUUID(),
-	type: NodeType.Layer2D,
-	name: options.name ?? "2D Layer",
-	transform: createTransform2D(options.transform),
-	children: options.children ?? [],
-});
+export const createLayer2D = (options: CreateLayer2DOptions = {}): Scene2DLayer => {
+	const name = options.name ?? "2D Layer";
+	const children = options.children ?? [];
+	assertUniqueChildNames(name, children);
+	return {
+		id: options.id ?? crypto.randomUUID(),
+		type: NodeType.Layer2D,
+		name,
+		transform: createTransform2D(options.transform),
+		children,
+	};
+};
 
-export const createLayer3D = (options: CreateLayer3DOptions = {}): Scene3DLayer => ({
-	id: options.id ?? crypto.randomUUID(),
-	type: NodeType.Layer3D,
-	name: options.name ?? "3D Layer",
-	transform: createTransform3D(options.transform),
-	children: options.children ?? [],
-});
+export const createLayer3D = (options: CreateLayer3DOptions = {}): Scene3DLayer => {
+	const name = options.name ?? "3D Layer";
+	const children = options.children ?? [];
+	assertUniqueChildNames(name, children);
+	return {
+		id: options.id ?? crypto.randomUUID(),
+		type: NodeType.Layer3D,
+		name,
+		transform: createTransform3D(options.transform),
+		children,
+	};
+};

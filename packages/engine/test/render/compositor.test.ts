@@ -74,9 +74,9 @@ describe("Compositor", () => {
 	test("mount creates one renderer per layer in order and appends canvases", async () => {
 		const scene = createScene({
 			layers: [
-				createLayer2D({ id: "l-a" }),
-				createLayer3D({ id: "l-b" }),
-				createLayer2D({ id: "l-c" }),
+				createLayer2D({ id: "l-a", name: "a" }),
+				createLayer3D({ id: "l-b", name: "b" }),
+				createLayer2D({ id: "l-c", name: "c" }),
 			],
 		});
 		const host = makeHost();

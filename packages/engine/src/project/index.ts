@@ -1,4 +1,9 @@
-export { deserialize, type Project } from "./deserialize.ts";
+export {
+	deserialize,
+	deserializeTimeline,
+	type Project,
+	parseTimeline,
+} from "./deserialize.ts";
 export { migrate, UnknownSchemaVersionError } from "./migrations.ts";
 export {
 	type BoxJSON,
@@ -17,6 +22,8 @@ export {
 	type SceneMetaJSON,
 	type TimelineJSON,
 	type TrackJSON,
+	type TrackTargetByIdJSON,
+	type TrackTargetByPathJSON,
 	type TrackTargetJSON,
 	type Transform2DJSON,
 	type Transform3DJSON,

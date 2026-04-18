@@ -9,6 +9,7 @@ import {
 	picklist,
 	string,
 	tuple,
+	union,
 	variant,
 } from "valibot";
 import { NodeType } from "../scene/node-type.ts";
@@ -127,10 +128,17 @@ export const NumberClipSchema = object({
 	keyframes: array(NumberKeyframeSchema),
 });
 
-export const TrackTargetSchema = object({
+export const TrackTargetByIdSchema = object({
 	nodeId: string(),
 	property: string(),
 });
+
+export const TrackTargetByPathSchema = object({
+	nodePath: array(string()),
+	property: string(),
+});
+
+export const TrackTargetSchema = union([TrackTargetByPathSchema, TrackTargetByIdSchema]);
 
 export const NumberTrackSchema = object({
 	id: string(),
@@ -163,6 +171,8 @@ export type NumberKeyframeJSON = InferOutput<typeof NumberKeyframeSchema>;
 export type NumberClipJSON = InferOutput<typeof NumberClipSchema>;
 export type NumberTrackJSON = InferOutput<typeof NumberTrackSchema>;
 export type TrackJSON = InferOutput<typeof TrackSchema>;
+export type TrackTargetByIdJSON = InferOutput<typeof TrackTargetByIdSchema>;
+export type TrackTargetByPathJSON = InferOutput<typeof TrackTargetByPathSchema>;
 export type TrackTargetJSON = InferOutput<typeof TrackTargetSchema>;
 export type TimelineJSON = InferOutput<typeof TimelineSchema>;
 export type ProjectJSON = InferOutput<typeof ProjectSchema>;

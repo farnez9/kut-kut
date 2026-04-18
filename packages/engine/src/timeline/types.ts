@@ -6,10 +6,20 @@ export const TrackKind = {
 
 export type TrackKind = (typeof TrackKind)[keyof typeof TrackKind];
 
-export type TrackTarget = {
+export type TrackTargetById = {
 	nodeId: string;
 	property: string;
 };
+
+export type TrackTargetByPath = {
+	nodePath: string[];
+	property: string;
+};
+
+export type TrackTarget = TrackTargetById | TrackTargetByPath;
+
+export const isTrackTargetByPath = (target: TrackTarget): target is TrackTargetByPath =>
+	"nodePath" in target;
 
 export type Keyframe<T> = {
 	time: number;

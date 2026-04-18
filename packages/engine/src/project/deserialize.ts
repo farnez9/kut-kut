@@ -8,6 +8,7 @@ import { NodeType } from "../scene/node-type.ts";
 import type { Rect } from "../scene/rect.ts";
 import type { Scene } from "../scene/scene.ts";
 import { type Transform2D, type Transform3D, TransformKind } from "../scene/transform.ts";
+import { assertSceneStructure } from "../scene/validate.ts";
 import type { Timeline } from "../timeline/types.ts";
 import { migrate } from "./migrations.ts";
 import type {
@@ -21,7 +22,7 @@ import type {
 	Transform2DJSON,
 	Transform3DJSON,
 } from "./schema.ts";
-import { ProjectSchema } from "./schema.ts";
+import { ProjectSchema, TimelineSchema } from "./schema.ts";
 
 const rehydrateTransform2D = (t: Transform2DJSON): Transform2D => ({
 	kind: TransformKind.TwoD,
@@ -127,8 +128,15 @@ export type Project = {
 export const deserialize = (input: unknown): Project => {
 	const migrated = migrate(input);
 	const project = parse(ProjectSchema, migrated);
+	const scene = rehydrateScene(project.scene);
+	assertSceneStructure(scene);
 	return {
-		scene: rehydrateScene(project.scene),
+		scene,
 		timeline: rehydrateTimeline(project.timeline),
 	};
 };
+
+export const parseTimeline = (input: unknown): TimelineJSON => parse(TimelineSchema, input);
+
+export const deserializeTimeline = (input: unknown): Timeline =>
+	rehydrateTimeline(parseTimeline(input));

@@ -20,10 +20,13 @@ export {
 } from "./playback.ts";
 export {
 	type Clip,
+	isTrackTargetByPath,
 	type Keyframe,
 	type NumberTrack,
 	type Timeline,
 	type Track,
 	TrackKind,
 	type TrackTarget,
+	type TrackTargetById,
+	type TrackTargetByPath,
 } from "./types.ts";

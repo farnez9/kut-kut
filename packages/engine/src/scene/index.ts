@@ -1,5 +1,5 @@
 export { type Box, type CreateBoxOptions, createBox } from "./box.ts";
-export { findNodeById } from "./find.ts";
+export { findNodeById, findNodeByPath } from "./find.ts";
 export { type CreateGroupOptions, createGroup, type Group } from "./group.ts";
 export {
 	type CreateLayer2DOptions,
@@ -30,3 +30,8 @@ export {
 	TransformKind,
 	type Vec3,
 } from "./transform.ts";
+export {
+	assertSceneStructure,
+	assertUniqueChildNames,
+	assertUniqueLayerNames,
+} from "./validate.ts";

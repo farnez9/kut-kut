@@ -22,3 +22,20 @@ export const findNodeById = (scene: Scene, id: string): Node | undefined => {
 	}
 	return undefined;
 };
+
+const descend = (node: Node, remaining: readonly string[]): Node | undefined => {
+	if (remaining.length === 0) return node;
+	if (!hasChildren(node)) return undefined;
+	const [head, ...rest] = remaining;
+	const child = node.children.find((c) => c.name === head);
+	if (!child) return undefined;
+	return descend(child, rest);
+};
+
+export const findNodeByPath = (scene: Scene, path: readonly string[]): Node | undefined => {
+	if (path.length === 0) return undefined;
+	const [head, ...rest] = path;
+	const layer = scene.layers.find((l) => l.name === head);
+	if (!layer) return undefined;
+	return descend(layer, rest);
+};
