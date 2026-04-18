@@ -40,28 +40,53 @@ export const Transform3DSchema = object({
 
 export const TransformSchema = variant("kind", [Transform2DSchema, Transform3DSchema]);
 
+export const RectSchema = object({
+	id: string(),
+	type: literal(NodeType.Rect),
+	name: string(),
+	transform: Transform2DSchema,
+	color: Vec3Schema,
+});
+
+export const BoxSchema = object({
+	id: string(),
+	type: literal(NodeType.Box),
+	name: string(),
+	transform: Transform3DSchema,
+	color: Vec3Schema,
+});
+
+export type RectJSON = InferOutput<typeof RectSchema>;
+export type BoxJSON = InferOutput<typeof BoxSchema>;
+
 export type GroupJSON = {
 	id: string;
 	type: typeof NodeType.Group;
 	name: string;
 	transform: InferOutput<typeof TransformSchema>;
-	children: GroupJSON[];
+	children: NodeJSON[];
 };
 
-export const GroupSchema: GenericSchema<GroupJSON> = object({
+export type NodeJSON = GroupJSON | RectJSON | BoxJSON;
+
+const NodeSchemaLazy: GenericSchema<NodeJSON> = lazy(() => NodeSchema);
+
+export const GroupSchema = object({
 	id: string(),
 	type: literal(NodeType.Group),
 	name: string(),
 	transform: TransformSchema,
-	children: array(lazy(() => GroupSchema)),
+	children: array(NodeSchemaLazy),
 });
+
+export const NodeSchema = variant("type", [GroupSchema, RectSchema, BoxSchema]);
 
 export const Layer2DSchema = object({
 	id: string(),
 	type: literal(NodeType.Layer2D),
 	name: string(),
 	transform: Transform2DSchema,
-	children: array(GroupSchema),
+	children: array(NodeSchemaLazy),
 });
 
 export const Layer3DSchema = object({
@@ -69,7 +94,7 @@ export const Layer3DSchema = object({
 	type: literal(NodeType.Layer3D),
 	name: string(),
 	transform: Transform3DSchema,
-	children: array(GroupSchema),
+	children: array(NodeSchemaLazy),
 });
 
 export const LayerSchema = variant("type", [Layer2DSchema, Layer3DSchema]);

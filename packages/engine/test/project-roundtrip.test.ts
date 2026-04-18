@@ -6,9 +6,11 @@ import {
 	UnknownSchemaVersionError,
 } from "../src/project/index.ts";
 import {
+	createBox,
 	createGroup,
 	createLayer2D,
 	createLayer3D,
+	createRect,
 	createScene,
 	createTransform2D,
 	createTransform3D,
@@ -22,10 +24,17 @@ import {
 } from "../src/timeline/index.ts";
 
 const buildFixtureScene = () => {
+	const deepRect = createRect({
+		id: "r-deep",
+		name: "deep-rect",
+		transform: { x: 1, y: 2, scaleX: 3, scaleY: 3 },
+		color: [0.1, 0.2, 0.3],
+	});
 	const deepGroup = createGroup({
 		id: "g-deep",
 		name: "deep",
 		transform: createTransform2D({ x: 5, y: -3, opacity: 0.25 }),
+		children: [deepRect],
 	});
 	const outerGroup = createGroup({
 		id: "g-outer",
@@ -37,6 +46,14 @@ const buildFixtureScene = () => {
 		id: "g-mesh",
 		name: "mesh-group",
 		transform: createTransform3D({ position: [1, 2, 3], scale: [0.5, 0.5, 0.5] }),
+		children: [
+			createBox({
+				id: "b-1",
+				name: "cube",
+				transform: { position: [4, 5, 6], rotation: [0, 1, 0] },
+				color: [0.9, 0.1, 0.5],
+			}),
+		],
 	});
 	return createScene({
 		meta: { name: "roundtrip", width: 1280, height: 720, fps: 60, duration: 5 },
@@ -199,5 +216,13 @@ describe("project roundtrip", () => {
 		expect(() => deserialize({ schemaVersion: 99, scene: {}, timeline: { tracks: [] } })).toThrow(
 			UnknownSchemaVersionError,
 		);
+	});
+
+	test("invalid content-node payload (rect color missing a component) throws", () => {
+		const base = serialize(buildFixtureScene());
+		const broken = JSON.parse(JSON.stringify(base));
+		// reach into the deep rect and truncate color
+		broken.scene.layers[0].children[0].children[0].children[0].color = [0.1, 0.2];
+		expect(() => deserialize(broken)).toThrow();
 	});
 });

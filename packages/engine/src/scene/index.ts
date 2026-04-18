@@ -1,3 +1,4 @@
+export { type Box, type CreateBoxOptions, createBox } from "./box.ts";
 export { findNodeById } from "./find.ts";
 export { type CreateGroupOptions, createGroup, type Group } from "./group.ts";
 export {
@@ -11,6 +12,7 @@ export {
 } from "./layer.ts";
 export type { Node } from "./node.ts";
 export { NodeType } from "./node-type.ts";
+export { type CreateRectOptions, createRect, type Rect } from "./rect.ts";
 export {
 	type CreateSceneOptions,
 	createScene,

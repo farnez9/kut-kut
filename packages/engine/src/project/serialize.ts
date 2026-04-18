@@ -1,6 +1,9 @@
+import type { Box } from "../scene/box.ts";
 import type { Group } from "../scene/group.ts";
 import type { Layer } from "../scene/layer.ts";
+import type { Node } from "../scene/node.ts";
 import { NodeType } from "../scene/node-type.ts";
+import type { Rect } from "../scene/rect.ts";
 import type { Scene } from "../scene/scene.ts";
 import {
 	type Transform,
@@ -11,9 +14,12 @@ import {
 import { createTimeline } from "../timeline/factories.ts";
 import type { Timeline } from "../timeline/types.ts";
 import type {
+	BoxJSON,
 	GroupJSON,
 	LayerJSON,
+	NodeJSON,
 	ProjectJSON,
+	RectJSON,
 	SceneJSON,
 	TimelineJSON,
 	Transform2DJSON,
@@ -43,13 +49,42 @@ const serializeTransform3D = (t: Transform3D): Transform3DJSON => ({
 const serializeTransform = (t: Transform): TransformJSON =>
 	t.kind === TransformKind.TwoD ? serializeTransform2D(t) : serializeTransform3D(t);
 
+const serializeRect = (r: Rect): RectJSON => ({
+	id: r.id,
+	type: NodeType.Rect,
+	name: r.name,
+	transform: serializeTransform2D(r.transform),
+	color: r.color.get(),
+});
+
+const serializeBox = (b: Box): BoxJSON => ({
+	id: b.id,
+	type: NodeType.Box,
+	name: b.name,
+	transform: serializeTransform3D(b.transform),
+	color: b.color.get(),
+});
+
 const serializeGroup = (g: Group): GroupJSON => ({
 	id: g.id,
 	type: NodeType.Group,
 	name: g.name,
 	transform: serializeTransform(g.transform),
-	children: g.children.map(serializeGroup),
+	children: g.children.map(serializeNode),
 });
+
+const serializeNode = (node: Node): NodeJSON => {
+	switch (node.type) {
+		case NodeType.Group:
+			return serializeGroup(node);
+		case NodeType.Rect:
+			return serializeRect(node);
+		case NodeType.Box:
+			return serializeBox(node);
+		default:
+			throw new Error(`serializeNode: unexpected node type "${node.type}" under a group/layer`);
+	}
+};
 
 const serializeLayer = (l: Layer): LayerJSON => {
 	if (l.type === NodeType.Layer2D) {
@@ -58,7 +93,7 @@ const serializeLayer = (l: Layer): LayerJSON => {
 			type: NodeType.Layer2D,
 			name: l.name,
 			transform: serializeTransform2D(l.transform),
-			children: l.children.map(serializeGroup),
+			children: l.children.map(serializeNode),
 		};
 	}
 	return {
@@ -66,7 +101,7 @@ const serializeLayer = (l: Layer): LayerJSON => {
 		type: NodeType.Layer3D,
 		name: l.name,
 		transform: serializeTransform3D(l.transform),
-		children: l.children.map(serializeGroup),
+		children: l.children.map(serializeNode),
 	};
 };
 

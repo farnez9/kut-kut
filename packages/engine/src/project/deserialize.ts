@@ -1,15 +1,21 @@
 import { parse } from "valibot";
 import { prop } from "../reactive/property.ts";
+import type { Box } from "../scene/box.ts";
 import type { Group } from "../scene/group.ts";
 import type { Layer, Scene2DLayer, Scene3DLayer } from "../scene/layer.ts";
+import type { Node } from "../scene/node.ts";
 import { NodeType } from "../scene/node-type.ts";
+import type { Rect } from "../scene/rect.ts";
 import type { Scene } from "../scene/scene.ts";
 import { type Transform2D, type Transform3D, TransformKind } from "../scene/transform.ts";
 import type { Timeline } from "../timeline/types.ts";
 import { migrate } from "./migrations.ts";
 import type {
+	BoxJSON,
 	GroupJSON,
 	LayerJSON,
+	NodeJSON,
+	RectJSON,
 	SceneJSON,
 	TimelineJSON,
 	Transform2DJSON,
@@ -35,6 +41,22 @@ const rehydrateTransform3D = (t: Transform3DJSON): Transform3D => ({
 	opacity: prop(t.opacity),
 });
 
+const rehydrateRect = (r: RectJSON): Rect => ({
+	id: r.id,
+	type: NodeType.Rect,
+	name: r.name,
+	transform: rehydrateTransform2D(r.transform),
+	color: prop(r.color),
+});
+
+const rehydrateBox = (b: BoxJSON): Box => ({
+	id: b.id,
+	type: NodeType.Box,
+	name: b.name,
+	transform: rehydrateTransform3D(b.transform),
+	color: prop(b.color),
+});
+
 const rehydrateGroup = (g: GroupJSON): Group => ({
 	id: g.id,
 	type: NodeType.Group,
@@ -43,8 +65,19 @@ const rehydrateGroup = (g: GroupJSON): Group => ({
 		g.transform.kind === TransformKind.TwoD
 			? rehydrateTransform2D(g.transform)
 			: rehydrateTransform3D(g.transform),
-	children: g.children.map(rehydrateGroup),
+	children: g.children.map(rehydrateNode),
 });
+
+const rehydrateNode = (node: NodeJSON): Node => {
+	switch (node.type) {
+		case NodeType.Group:
+			return rehydrateGroup(node);
+		case NodeType.Rect:
+			return rehydrateRect(node);
+		case NodeType.Box:
+			return rehydrateBox(node);
+	}
+};
 
 const rehydrateLayer = (l: LayerJSON): Layer => {
 	if (l.type === NodeType.Layer2D) {
@@ -53,7 +86,7 @@ const rehydrateLayer = (l: LayerJSON): Layer => {
 			type: NodeType.Layer2D,
 			name: l.name,
 			transform: rehydrateTransform2D(l.transform),
-			children: l.children.map(rehydrateGroup),
+			children: l.children.map(rehydrateNode),
 		};
 		return layer;
 	}
@@ -62,7 +95,7 @@ const rehydrateLayer = (l: LayerJSON): Layer => {
 		type: NodeType.Layer3D,
 		name: l.name,
 		transform: rehydrateTransform3D(l.transform),
-		children: l.children.map(rehydrateGroup),
+		children: l.children.map(rehydrateNode),
 	};
 	return layer;
 };

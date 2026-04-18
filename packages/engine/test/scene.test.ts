@@ -56,7 +56,7 @@ describe("scene graph", () => {
 		});
 		const layer = createLayer2D({ children: [outer] });
 		expect(layer.children[0]).toBe(outer);
-		expect(layer.children[0]?.children[0]).toBe(inner);
+		expect(outer.children[0]).toBe(inner);
 	});
 
 	test("ids default to unique UUIDs and can be overridden", () => {

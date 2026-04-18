@@ -1,3 +1,4 @@
+import type { Node } from "./node.ts";
 import { NodeType } from "./node-type.ts";
 import type { Transform } from "./transform.ts";
 
@@ -6,14 +7,14 @@ export type Group = {
 	readonly type: typeof NodeType.Group;
 	name: string;
 	transform: Transform;
-	children: Group[];
+	children: Node[];
 };
 
 export type CreateGroupOptions = {
 	id?: string;
 	name?: string;
 	transform: Transform;
-	children?: Group[];
+	children?: Node[];
 };
 
 export const createGroup = (options: CreateGroupOptions): Group => ({
