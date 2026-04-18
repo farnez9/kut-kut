@@ -1,0 +1,7 @@
+export const NodeType = {
+	Group: "group",
+	Layer2D: "layer-2d",
+	Layer3D: "layer-3d",
+} as const;
+
+export type NodeType = (typeof NodeType)[keyof typeof NodeType];
