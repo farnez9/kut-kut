@@ -1,6 +1,6 @@
 # Kut-Kut — overview
 
-**Last updated:** 2026-04-18 (session 02 shipped)
+**Last updated:** 2026-04-18 (session 03 shipped)
 
 ## Product
 

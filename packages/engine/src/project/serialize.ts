@@ -8,11 +8,14 @@ import {
 	type Transform3D,
 	TransformKind,
 } from "../scene/transform.ts";
+import { createTimeline } from "../timeline/factories.ts";
+import type { Timeline } from "../timeline/types.ts";
 import type {
 	GroupJSON,
 	LayerJSON,
 	ProjectJSON,
 	SceneJSON,
+	TimelineJSON,
 	Transform2DJSON,
 	Transform3DJSON,
 	TransformJSON,
@@ -72,8 +75,22 @@ export const serializeScene = (scene: Scene): SceneJSON => ({
 	layers: scene.layers.map(serializeLayer),
 });
 
-export const serialize = (scene: Scene): ProjectJSON => ({
+export const serializeTimeline = (timeline: Timeline): TimelineJSON => ({
+	tracks: timeline.tracks.map((track) => ({
+		id: track.id,
+		kind: track.kind,
+		target: { ...track.target },
+		clips: track.clips.map((clip) => ({
+			id: clip.id,
+			start: clip.start,
+			end: clip.end,
+			keyframes: clip.keyframes.map((k) => ({ time: k.time, value: k.value, easing: k.easing })),
+		})),
+	})),
+});
+
+export const serialize = (scene: Scene, timeline: Timeline = createTimeline()): ProjectJSON => ({
 	schemaVersion: CURRENT_SCHEMA_VERSION,
 	scene: serializeScene(scene),
-	timeline: null,
+	timeline: serializeTimeline(timeline),
 });

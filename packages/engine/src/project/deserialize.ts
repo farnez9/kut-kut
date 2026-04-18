@@ -5,11 +5,13 @@ import type { Layer, Scene2DLayer, Scene3DLayer } from "../scene/layer.ts";
 import { NodeType } from "../scene/node-type.ts";
 import type { Scene } from "../scene/scene.ts";
 import { type Transform2D, type Transform3D, TransformKind } from "../scene/transform.ts";
+import type { Timeline } from "../timeline/types.ts";
 import { migrate } from "./migrations.ts";
 import type {
 	GroupJSON,
 	LayerJSON,
 	SceneJSON,
+	TimelineJSON,
 	Transform2DJSON,
 	Transform3DJSON,
 } from "./schema.ts";
@@ -70,8 +72,30 @@ const rehydrateScene = (s: SceneJSON): Scene => ({
 	layers: s.layers.map(rehydrateLayer),
 });
 
-export const deserialize = (input: unknown): Scene => {
+const rehydrateTimeline = (t: TimelineJSON): Timeline => ({
+	tracks: t.tracks.map((track) => ({
+		id: track.id,
+		kind: track.kind,
+		target: { ...track.target },
+		clips: track.clips.map((clip) => ({
+			id: clip.id,
+			start: clip.start,
+			end: clip.end,
+			keyframes: clip.keyframes.map((k) => ({ time: k.time, value: k.value, easing: k.easing })),
+		})),
+	})),
+});
+
+export type Project = {
+	scene: Scene;
+	timeline: Timeline;
+};
+
+export const deserialize = (input: unknown): Project => {
 	const migrated = migrate(input);
 	const project = parse(ProjectSchema, migrated);
-	return rehydrateScene(project.scene);
+	return {
+		scene: rehydrateScene(project.scene),
+		timeline: rehydrateTimeline(project.timeline),
+	};
 };

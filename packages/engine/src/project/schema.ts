@@ -4,15 +4,17 @@ import {
 	type InferOutput,
 	lazy,
 	literal,
-	null_,
 	number,
 	object,
+	picklist,
 	string,
 	tuple,
 	variant,
 } from "valibot";
 import { NodeType } from "../scene/node-type.ts";
 import { TransformKind } from "../scene/transform.ts";
+import { EasingName } from "../timeline/easing.ts";
+import { TrackKind } from "../timeline/types.ts";
 
 export const CURRENT_SCHEMA_VERSION = 1 as const;
 
@@ -85,10 +87,43 @@ export const SceneSchema = object({
 	layers: array(LayerSchema),
 });
 
+export const EasingNameSchema = picklist(Object.values(EasingName));
+
+export const NumberKeyframeSchema = object({
+	time: number(),
+	value: number(),
+	easing: EasingNameSchema,
+});
+
+export const NumberClipSchema = object({
+	id: string(),
+	start: number(),
+	end: number(),
+	keyframes: array(NumberKeyframeSchema),
+});
+
+export const TrackTargetSchema = object({
+	nodeId: string(),
+	property: string(),
+});
+
+export const NumberTrackSchema = object({
+	id: string(),
+	kind: literal(TrackKind.Number),
+	target: TrackTargetSchema,
+	clips: array(NumberClipSchema),
+});
+
+export const TrackSchema = variant("kind", [NumberTrackSchema]);
+
+export const TimelineSchema = object({
+	tracks: array(TrackSchema),
+});
+
 export const ProjectSchema = object({
 	schemaVersion: literal(CURRENT_SCHEMA_VERSION),
 	scene: SceneSchema,
-	timeline: null_(),
+	timeline: TimelineSchema,
 });
 
 export type Transform2DJSON = InferOutput<typeof Transform2DSchema>;
@@ -99,4 +134,10 @@ export type Layer3DJSON = InferOutput<typeof Layer3DSchema>;
 export type LayerJSON = InferOutput<typeof LayerSchema>;
 export type SceneMetaJSON = InferOutput<typeof SceneMetaSchema>;
 export type SceneJSON = InferOutput<typeof SceneSchema>;
+export type NumberKeyframeJSON = InferOutput<typeof NumberKeyframeSchema>;
+export type NumberClipJSON = InferOutput<typeof NumberClipSchema>;
+export type NumberTrackJSON = InferOutput<typeof NumberTrackSchema>;
+export type TrackJSON = InferOutput<typeof TrackSchema>;
+export type TrackTargetJSON = InferOutput<typeof TrackTargetSchema>;
+export type TimelineJSON = InferOutput<typeof TimelineSchema>;
 export type ProjectJSON = InferOutput<typeof ProjectSchema>;

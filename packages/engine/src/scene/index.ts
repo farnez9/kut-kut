@@ -1,3 +1,4 @@
+export { findNodeById } from "./find.ts";
 export { type CreateGroupOptions, createGroup, type Group } from "./group.ts";
 export {
 	type CreateLayer2DOptions,
