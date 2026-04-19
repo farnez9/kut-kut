@@ -53,12 +53,13 @@ export const ProjectProvider = (props: ProjectProviderProps): JSX.Element => {
 				readProject(name),
 			]);
 			if (gen !== generation) return;
-			const scene = mod.default();
+			const factory = mod.default;
+			const scene = factory();
 			const timeline = projectState.timeline
 				? deserializeTimeline(projectState.timeline)
 				: createTimeline();
 			const overlay = projectState.overlay ? parseOverlay(projectState.overlay) : emptyOverlay();
-			setBundle({ name, scene, timeline, overlay });
+			setBundle({ name, scene, factory, timeline, overlay });
 			setState("ready");
 			writeQueryProject(name);
 		} catch (err) {

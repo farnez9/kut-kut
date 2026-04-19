@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { applyOverlay, emptyOverlay, type Overlay } from "../../src/overlay/index.ts";
+import {
+	applyOverlay,
+	CURRENT_OVERLAY_VERSION,
+	emptyOverlay,
+	type Overlay,
+} from "../../src/overlay/index.ts";
 import {
 	createBox,
 	createLayer2D,
@@ -36,14 +41,20 @@ const build3DScene = () =>
 		],
 	});
 
+const overlayWith = (overrides: Overlay["overrides"]): Overlay => ({
+	schemaVersion: CURRENT_OVERLAY_VERSION,
+	overrides,
+	additions: [],
+	deletions: [],
+});
+
 describe("applyOverlay", () => {
 	test("writes a scalar override through a dotted property path", () => {
 		const scene = build2DScene();
-		const overlay: Overlay = {
-			schemaVersion: 1,
-			overrides: [{ nodePath: ["2D", "Hero"], property: "transform.x", value: 500 }],
-		};
-		applyOverlay(scene, overlay);
+		applyOverlay(
+			scene,
+			overlayWith([{ nodePath: ["2D", "Hero"], property: "transform.x", value: 500 }]),
+		);
 		const hero = findNodeByPath(scene, ["2D", "Hero"]);
 		if (!hero || hero.transform.kind !== "2d") throw new Error("unreachable");
 		expect(hero.transform.x.get()).toBe(500);
@@ -51,13 +62,12 @@ describe("applyOverlay", () => {
 
 	test("writes a vec3 override into a 3D transform slot", () => {
 		const scene = build3DScene();
-		const overlay: Overlay = {
-			schemaVersion: 1,
-			overrides: [
+		applyOverlay(
+			scene,
+			overlayWith([
 				{ nodePath: ["3D", "Cube"], property: "transform.position", value: [12, 34, 56] },
-			],
-		};
-		applyOverlay(scene, overlay);
+			]),
+		);
 		const cube = findNodeByPath(scene, ["3D", "Cube"]);
 		if (!cube || cube.transform.kind !== "3d") throw new Error("unreachable");
 		expect(cube.transform.position.get()).toEqual([12, 34, 56]);
@@ -65,11 +75,12 @@ describe("applyOverlay", () => {
 
 	test("silently skips unresolved node paths", () => {
 		const scene = build2DScene();
-		const overlay: Overlay = {
-			schemaVersion: 1,
-			overrides: [{ nodePath: ["2D", "Ghost"], property: "transform.x", value: 999 }],
-		};
-		expect(() => applyOverlay(scene, overlay)).not.toThrow();
+		expect(() =>
+			applyOverlay(
+				scene,
+				overlayWith([{ nodePath: ["2D", "Ghost"], property: "transform.x", value: 999 }]),
+			),
+		).not.toThrow();
 		const hero = findNodeByPath(scene, ["2D", "Hero"]);
 		if (!hero || hero.transform.kind !== "2d") throw new Error("unreachable");
 		expect(hero.transform.x.get()).toBe(10);
@@ -77,11 +88,12 @@ describe("applyOverlay", () => {
 
 	test("silently skips type mismatches (vec3 value on scalar slot)", () => {
 		const scene = build2DScene();
-		const overlay: Overlay = {
-			schemaVersion: 1,
-			overrides: [{ nodePath: ["2D", "Hero"], property: "transform.x", value: [1, 2, 3] }],
-		};
-		expect(() => applyOverlay(scene, overlay)).not.toThrow();
+		expect(() =>
+			applyOverlay(
+				scene,
+				overlayWith([{ nodePath: ["2D", "Hero"], property: "transform.x", value: [1, 2, 3] }]),
+			),
+		).not.toThrow();
 		const hero = findNodeByPath(scene, ["2D", "Hero"]);
 		if (!hero || hero.transform.kind !== "2d") throw new Error("unreachable");
 		expect(hero.transform.x.get()).toBe(10);
@@ -89,11 +101,12 @@ describe("applyOverlay", () => {
 
 	test("silently skips unknown properties", () => {
 		const scene = build2DScene();
-		const overlay: Overlay = {
-			schemaVersion: 1,
-			overrides: [{ nodePath: ["2D", "Hero"], property: "transform.nope", value: 1 }],
-		};
-		expect(() => applyOverlay(scene, overlay)).not.toThrow();
+		expect(() =>
+			applyOverlay(
+				scene,
+				overlayWith([{ nodePath: ["2D", "Hero"], property: "transform.nope", value: 1 }]),
+			),
+		).not.toThrow();
 	});
 
 	test("empty overlay is a no-op", () => {
@@ -106,15 +119,14 @@ describe("applyOverlay", () => {
 
 	test("applies multiple overrides in order", () => {
 		const scene = build2DScene();
-		const overlay: Overlay = {
-			schemaVersion: 1,
-			overrides: [
+		applyOverlay(
+			scene,
+			overlayWith([
 				{ nodePath: ["2D", "Hero"], property: "transform.x", value: 1 },
 				{ nodePath: ["2D", "Hero"], property: "transform.y", value: 2 },
 				{ nodePath: ["2D", "Hero"], property: "transform.opacity", value: 0.5 },
-			],
-		};
-		applyOverlay(scene, overlay);
+			]),
+		);
 		const hero = findNodeByPath(scene, ["2D", "Hero"]);
 		if (!hero || hero.transform.kind !== "2d") throw new Error("unreachable");
 		expect(hero.transform.x.get()).toBe(1);

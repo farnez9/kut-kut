@@ -1,8 +1,13 @@
 export {
+	applyNodeOps,
 	applyOverlay,
 	CURRENT_OVERLAY_VERSION,
 	deserializeOverlay,
 	emptyOverlay,
+	migrateOverlay,
+	type NodeAddition,
+	type NodeDeletion,
+	type NodeKind,
 	type Overlay,
 	type OverlayJSON,
 	type OverrideValue,

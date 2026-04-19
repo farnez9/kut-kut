@@ -13,7 +13,7 @@ Canvas host for the engine compositor.
 
 ## Project source
 
-`scene` comes from `<ProjectProvider>` via `useProject().bundle()`. The provider loads it by dynamically importing `projects/<name>/scene.ts`. `timeline` is **not** a prop — `PreviewHost` reads the reactive timeline store from `useTimeline()` so live edits (session 07 clip drags, session 08 keyframe mutations) propagate into the preview without remounting. See `features/project/CLAUDE.md` for the load sequence and `features/timeline/CLAUDE.md` for the store ownership.
+`scene` is the **live scene** — `useOverlay().scene()` — rebuilt from the project factory + `applyNodeOps(overlay)` on every structural change. `KeyedPreviewHost` wraps `PreviewHost` in `<Show when={scene()} keyed>` so the compositor is disposed and remounted cleanly whenever the live scene identity changes (the Pixi/Three layer renderers build their tree once at mount). The project factory itself is loaded by `<ProjectProvider>` via a dynamic import of `projects/<name>/scene.ts`. `timeline` is **not** a prop — `PreviewHost` reads the reactive timeline store from `useTimeline()` so live edits (session 07 clip drags, session 08 keyframe mutations) propagate into the preview without remounting. See `features/project/CLAUDE.md` for the load sequence and `features/timeline/CLAUDE.md` for the store ownership.
 
 ## HMR
 

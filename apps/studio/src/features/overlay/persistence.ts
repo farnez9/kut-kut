@@ -18,6 +18,12 @@ const snapshot = (overlay: Store<Overlay>): Overlay => ({
 		property: o.property,
 		value: Array.isArray(o.value) ? ([...o.value] as [number, number, number]) : o.value,
 	})),
+	additions: overlay.additions.map((a) => ({
+		parentPath: [...a.parentPath],
+		name: a.name,
+		kind: a.kind,
+	})),
+	deletions: overlay.deletions.map((d) => ({ path: [...d.path] })),
 });
 
 export const useOverlayPersistence = (

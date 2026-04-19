@@ -126,8 +126,8 @@ export const createThreeLayerRenderer = (options: CreateLayerRendererOptions): L
 
 		const fov = 45;
 		const aspect = meta.width / meta.height;
-		camera = new PerspectiveCamera(fov, aspect, 0.1, 1000);
 		const dist = meta.height / (2 * Math.tan((fov / 2) * (Math.PI / 180)));
+		camera = new PerspectiveCamera(fov, aspect, 0.1, dist * 4);
 		camera.position.set(0, 0, dist);
 		camera.lookAt(0, 0, 0);
 

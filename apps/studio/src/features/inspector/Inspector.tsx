@@ -8,7 +8,7 @@ import {
 } from "@kut-kut/engine";
 import type { JSX } from "solid-js";
 import { Match, Switch } from "solid-js";
-import { useProject } from "../project/index.ts";
+import { useOverlay } from "../overlay/index.ts";
 import { parseKeyframeId, useTimeline } from "../timeline/index.ts";
 import { NodePanel, type NodeSelection } from "./NodePanel.tsx";
 
@@ -77,7 +77,7 @@ const EmptyPanel = (): JSX.Element => (
 
 export const Inspector = (): JSX.Element => {
 	const t = useTimeline();
-	const project = useProject();
+	const overlay = useOverlay();
 
 	const keyframeSelection = (): KeyframeSelection | null => {
 		const id = t.view.selection.keyframeId;
@@ -94,9 +94,7 @@ export const Inspector = (): JSX.Element => {
 	const nodeSelection = (): NodeSelection | null => {
 		const path = t.view.selection.nodePath;
 		if (!path) return null;
-		const scene = project.bundle()?.scene;
-		if (!scene) return null;
-		const node: Node | undefined = findNodeByPath(scene, path);
+		const node: Node | undefined = findNodeByPath(overlay.scene(), path);
 		if (!node) return null;
 		return { node, nodePath: path };
 	};

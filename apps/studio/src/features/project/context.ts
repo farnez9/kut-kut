@@ -5,6 +5,7 @@ import type { ProjectListing } from "../../lib/plugin-client.ts";
 export type ProjectBundle = {
 	name: string;
 	scene: Scene;
+	factory: () => Scene;
 	timeline: Timeline;
 	overlay: Overlay;
 };

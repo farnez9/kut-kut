@@ -1,4 +1,5 @@
 export {
+	type AddNodeArgs,
 	OverlayContext,
 	type OverlayContextValue,
 	type OverlaySaveState,

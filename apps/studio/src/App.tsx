@@ -2,7 +2,8 @@ import { ChevronDown } from "lucide-solid";
 import type { JSX } from "solid-js";
 import { createEffect, createSignal, on, Show, useContext } from "solid-js";
 import { Inspector, InspectorHint } from "./features/inspector/index.ts";
-import { OverlayProvider } from "./features/overlay/index.ts";
+import { LayersPanel } from "./features/layers/index.ts";
+import { OverlayProvider, useOverlay } from "./features/overlay/index.ts";
 import { PlaybackContext } from "./features/playback/context.ts";
 import {
 	PlaybackControls,
@@ -85,6 +86,15 @@ const PreviewMeta = (): JSX.Element => {
 	);
 };
 
+const KeyedPreviewHost = (): JSX.Element => {
+	const overlay = useOverlay();
+	return (
+		<Show when={overlay.scene()} keyed>
+			{(scene) => <PreviewHost scene={scene} />}
+		</Show>
+	);
+};
+
 const PreviewContent = (): JSX.Element => {
 	const project = useProject();
 	return (
@@ -104,7 +114,6 @@ const PreviewContent = (): JSX.Element => {
 			>
 				<Show
 					when={project.bundle()}
-					keyed
 					fallback={
 						<PreviewMessage
 							label="No projects"
@@ -112,7 +121,7 @@ const PreviewContent = (): JSX.Element => {
 						/>
 					}
 				>
-					{(b) => <PreviewHost scene={b.scene} />}
+					<KeyedPreviewHost />
 				</Show>
 			</Show>
 		</Show>
@@ -188,6 +197,18 @@ const InspectorBody = (): JSX.Element => {
 	);
 };
 
+const LayersBody = (): JSX.Element => {
+	const ctx = useContext(TimelineContext);
+	return (
+		<Show
+			when={ctx}
+			fallback={<p class="panel-body layers__empty">Load a project to see layers.</p>}
+		>
+			<LayersPanel />
+		</Show>
+	);
+};
+
 const Shell = (): JSX.Element => {
 	const [tlHeight, setTlHeight] = createSignal(
 		readStoredNumber(LS_TL_HEIGHT, INITIAL_TIMELINE_HEIGHT),
@@ -230,6 +251,11 @@ const Shell = (): JSX.Element => {
 					<span class="panel-head__index">01</span>
 				</div>
 				<ProjectList />
+				<div class="panel-head panel-head--layers">
+					<span class="label">Layers</span>
+					<span class="panel-head__index">02</span>
+				</div>
+				<LayersBody />
 			</aside>
 
 			<section class="app-preview">
@@ -283,7 +309,7 @@ const Root = (): JSX.Element => {
 			{(b) => (
 				<PlaybackProvider duration={b.scene.meta.duration}>
 					<PlaybackHotkeys />
-					<OverlayProvider name={b.name} overlay={b.overlay}>
+					<OverlayProvider name={b.name} overlay={b.overlay} factory={b.factory}>
 						<TimelineProvider name={b.name} duration={b.scene.meta.duration} timeline={b.timeline}>
 							<Shell />
 						</TimelineProvider>
