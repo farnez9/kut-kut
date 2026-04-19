@@ -9,3 +9,5 @@ dist
 *.log
 
 projects/*/assets/.peaks/
+
+.claude/scheduled_tasks.lock
