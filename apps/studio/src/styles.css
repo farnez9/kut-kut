@@ -166,6 +166,43 @@ button:focus-visible {
 	box-shadow: 0 0 6px var(--hot-glow);
 }
 
+.app-timeline__toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border-radius: 4px;
+	border: 1px solid var(--rule-soft);
+	background: var(--ink-2);
+	color: var(--paper-dim);
+	cursor: pointer;
+	transition:
+		color 120ms ease,
+		background 120ms ease,
+		border-color 120ms ease;
+}
+
+.app-timeline__toggle:hover {
+	color: var(--hot);
+	background: var(--ink-3);
+	border-color: var(--hot);
+}
+
+.app-timeline__toggle:focus-visible {
+	outline: none;
+	border-color: var(--hot);
+	box-shadow: 0 0 0 1px var(--hot-glow);
+}
+
+.app-timeline__chevron {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	line-height: 0;
+	transition: transform 160ms ease;
+}
+
 .app-preview {
 	grid-area: preview;
 	background: #000;
@@ -252,6 +289,22 @@ button:focus-visible {
 	text-transform: none;
 }
 
+.app-timeline--collapsed {
+	padding-top: 10px;
+	padding-bottom: 10px;
+	gap: 0;
+}
+
+.app-timeline--collapsed .panel-head {
+	padding-bottom: 0;
+	margin-bottom: 0;
+	border-bottom: 0;
+}
+
+.app-timeline--collapsed .app-timeline__chevron {
+	transform: rotate(180deg);
+}
+
 .panel-body {
 	color: var(--paper-dim);
 	font-size: 14px;
@@ -309,6 +362,62 @@ button:focus-visible {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.inspector__field {
+	display: grid;
+	grid-template-columns: 90px 1fr;
+	align-items: center;
+	gap: 10px;
+}
+
+.inspector__field--vec3 {
+	align-items: start;
+}
+
+.inspector__input {
+	width: 100%;
+	min-width: 0;
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums;
+	font-size: 13px;
+	color: var(--paper);
+	background: #15151a;
+	border: 1px solid var(--rule-soft);
+	border-radius: 2px;
+	padding: 4px 6px;
+	outline: none;
+	transition: border-color 0.08s ease;
+}
+
+.inspector__input:hover {
+	border-color: var(--paper-ghost);
+}
+
+.inspector__input:focus {
+	border-color: var(--hot);
+	box-shadow: 0 0 0 1px var(--hot-glow);
+}
+
+.inspector__vec3 {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 6px;
+}
+
+.inspector__vec3-cell {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.inspector__axis {
+	font-family: var(--font-mono);
+	font-size: 9px;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: var(--paper-mute);
 }
 
 /* ───── preview region (film-gate framing) ───── */

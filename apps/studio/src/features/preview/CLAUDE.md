@@ -8,7 +8,7 @@ Canvas host for the engine compositor.
 - Lifecycle owned here:
   - `onMount` → `createCompositor(...)` → `compositor.mount()`
   - `ResizeObserver` on the host element → `compositor.setSize(w, h)`
-  - `createEffect(() => applyTimeline(scene, useTimeline().timeline, playback.time()))` is the single path from time to scene mutations
+  - A single `createEffect` tracks `playback.time()` and, on every tick, runs `applyOverlay(scene, useOverlay().overlay)` first and then `applyTimeline(scene, useTimeline().timeline, t)`. Overlay must re-apply each frame so that when the timeline stops writing a property (playhead outside every clip on that property) the static override value remains; otherwise the last animated value would stick. `applyOverlay` is idempotent and fast — writing N overrides on each frame is cheap.
   - `onCleanup` → disconnect observer, dispose compositor
 
 ## Project source

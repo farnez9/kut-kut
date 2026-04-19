@@ -1,0 +1,53 @@
+{
+	"schemaVersion": 1,
+	"overrides": [
+		{
+			"nodePath": [
+				"2D",
+				"Hero"
+			],
+			"property": "transform.x",
+			"value": 50
+		},
+		{
+			"nodePath": [
+				"2D",
+				"Hero"
+			],
+			"property": "transform.y",
+			"value": 500
+		},
+		{
+			"nodePath": [
+				"2D",
+				"Hero"
+			],
+			"property": "transform.scaleY",
+			"value": 100
+		},
+		{
+			"nodePath": [
+				"2D",
+				"Hero"
+			],
+			"property": "transform.scaleX",
+			"value": 100
+		},
+		{
+			"nodePath": [
+				"2D",
+				"Hero"
+			],
+			"property": "transform.opacity",
+			"value": 1
+		},
+		{
+			"nodePath": [
+				"2D",
+				"Hero"
+			],
+			"property": "transform.rotation",
+			"value": 0.2446
+		}
+	]
+}

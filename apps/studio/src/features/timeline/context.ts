@@ -6,6 +6,7 @@ import type { Command } from "./commands.ts";
 export type TimelineSelection = {
 	clipId: string | null;
 	keyframeId: string | null;
+	nodePath: string[] | null;
 };
 
 export type TimelineView = {
@@ -45,6 +46,7 @@ export type TimelineContextValue = {
 	canRedo: Accessor<boolean>;
 	selectClip: (clipId: string | null) => void;
 	selectKeyframe: (clipId: string, index: number) => void;
+	selectNode: (nodePath: string[] | null) => void;
 	clearSelection: () => void;
 	saveState: Accessor<TimelineSaveState>;
 	saveError: Accessor<Error | null>;

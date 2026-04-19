@@ -2,7 +2,7 @@ import { createWriteStream } from "node:fs";
 import fs from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
-import { parseTimeline } from "@kut-kut/engine";
+import { parseOverlay, parseTimeline } from "@kut-kut/engine";
 import Busboy from "busboy";
 import type { Connect, Plugin } from "vite";
 
@@ -97,6 +97,21 @@ const readProjectHandler = async (
 		}
 	}
 
+	let overlay: unknown = null;
+	try {
+		const raw = await fs.readFile(path.join(projectPath, "overlay.json"), "utf8");
+		const parsed = JSON.parse(raw);
+		overlay = parseOverlay(parsed);
+	} catch (err) {
+		if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+			jsonResponse(res, 500, {
+				error: "failed to read overlay.json",
+				detail: (err as Error).message,
+			});
+			return;
+		}
+	}
+
 	const assetsDir = path.join(projectPath, "assets");
 	const assets: { path: string; size: number }[] = [];
 	try {
@@ -112,7 +127,7 @@ const readProjectHandler = async (
 		if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
 	}
 
-	jsonResponse(res, 200, { name, timeline, assets });
+	jsonResponse(res, 200, { name, timeline, overlay, assets });
 };
 
 const writeTimelineHandler = async (
@@ -149,6 +164,46 @@ const writeTimelineHandler = async (
 	}
 	await fs.writeFile(
 		path.join(projectPath, "timeline.json"),
+		`${JSON.stringify(validated, null, "\t")}\n`,
+		"utf8",
+	);
+	jsonResponse(res, 200, { ok: true });
+};
+
+const writeOverlayHandler = async (
+	req: IncomingMessage,
+	res: ServerResponse,
+	projectsDir: string,
+	name: string,
+): Promise<void> => {
+	const projectPath = safeProjectPath(projectsDir, name);
+	if (!projectPath) {
+		jsonResponse(res, 400, { error: "invalid project name" });
+		return;
+	}
+	let body: unknown;
+	try {
+		body = await readJsonBody(req);
+	} catch (err) {
+		jsonResponse(res, 400, { error: "invalid json", detail: (err as Error).message });
+		return;
+	}
+	if (body === null || typeof body !== "object" || !("overlay" in body)) {
+		jsonResponse(res, 400, { error: "expected { overlay } in body" });
+		return;
+	}
+	let validated: unknown;
+	try {
+		validated = parseOverlay((body as { overlay: unknown }).overlay);
+	} catch (err) {
+		jsonResponse(res, 400, {
+			error: "overlay failed schema validation",
+			detail: (err as Error).message,
+		});
+		return;
+	}
+	await fs.writeFile(
+		path.join(projectPath, "overlay.json"),
 		`${JSON.stringify(validated, null, "\t")}\n`,
 		"utf8",
 	);
@@ -262,6 +317,10 @@ const handle = async (
 	}
 	if (match.rest === "/timeline" && req.method === "POST") {
 		await writeTimelineHandler(req, res, projectsDir, match.name);
+		return true;
+	}
+	if (match.rest === "/overlay" && req.method === "POST") {
+		await writeOverlayHandler(req, res, projectsDir, match.name);
 		return true;
 	}
 	if (match.rest === "/assets" && req.method === "POST") {

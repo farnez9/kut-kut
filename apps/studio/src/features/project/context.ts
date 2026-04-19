@@ -1,4 +1,4 @@
-import type { Scene, Timeline } from "@kut-kut/engine";
+import type { Overlay, Scene, Timeline } from "@kut-kut/engine";
 import { type Accessor, createContext, useContext } from "solid-js";
 import type { ProjectListing } from "../../lib/plugin-client.ts";
 
@@ -6,6 +6,7 @@ export type ProjectBundle = {
 	name: string;
 	scene: Scene;
 	timeline: Timeline;
+	overlay: Overlay;
 };
 
 export type ProjectLoadState = "idle" | "loading" | "ready" | "error";

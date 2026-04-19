@@ -1,4 +1,10 @@
-import { createTimeline, deserializeTimeline, type Scene } from "@kut-kut/engine";
+import {
+	createTimeline,
+	deserializeTimeline,
+	emptyOverlay,
+	parseOverlay,
+	type Scene,
+} from "@kut-kut/engine";
 import type { JSX } from "solid-js";
 import { createSignal, onMount } from "solid-js";
 import { listProjects, type ProjectListing, readProject } from "../../lib/plugin-client.ts";
@@ -51,7 +57,8 @@ export const ProjectProvider = (props: ProjectProviderProps): JSX.Element => {
 			const timeline = projectState.timeline
 				? deserializeTimeline(projectState.timeline)
 				: createTimeline();
-			setBundle({ name, scene, timeline });
+			const overlay = projectState.overlay ? parseOverlay(projectState.overlay) : emptyOverlay();
+			setBundle({ name, scene, timeline, overlay });
 			setState("ready");
 			writeQueryProject(name);
 		} catch (err) {

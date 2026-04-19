@@ -1,6 +1,8 @@
+import { ChevronDown } from "lucide-solid";
 import type { JSX } from "solid-js";
-import { createSignal, Show, useContext } from "solid-js";
+import { createEffect, createSignal, on, Show, useContext } from "solid-js";
 import { Inspector, InspectorHint } from "./features/inspector/index.ts";
+import { OverlayProvider } from "./features/overlay/index.ts";
 import { PlaybackContext } from "./features/playback/context.ts";
 import {
 	PlaybackControls,
@@ -18,6 +20,22 @@ import { TimelineContext } from "./features/timeline/context.ts";
 import { TimelineProvider, TimelineResizer, TimelineView } from "./features/timeline/index.ts";
 
 const INITIAL_TIMELINE_HEIGHT = 260;
+const TL_COLLAPSED_HEIGHT = 44;
+const LS_TL_HEIGHT = "kk:timeline:height";
+const LS_TL_COLLAPSED = "kk:timeline:collapsed";
+
+const readStoredNumber = (key: string, fallback: number): number => {
+	if (typeof window === "undefined") return fallback;
+	const raw = window.localStorage.getItem(key);
+	if (raw === null) return fallback;
+	const n = Number(raw);
+	return Number.isFinite(n) ? n : fallback;
+};
+
+const readStoredBool = (key: string): boolean => {
+	if (typeof window === "undefined") return false;
+	return window.localStorage.getItem(key) === "1";
+};
 
 const Wordmark = (): JSX.Element => (
 	<div class="wordmark">
@@ -171,9 +189,35 @@ const InspectorBody = (): JSX.Element => {
 };
 
 const Shell = (): JSX.Element => {
-	const [tlHeight, setTlHeight] = createSignal(INITIAL_TIMELINE_HEIGHT);
+	const [tlHeight, setTlHeight] = createSignal(
+		readStoredNumber(LS_TL_HEIGHT, INITIAL_TIMELINE_HEIGHT),
+	);
+	const [collapsed, setCollapsed] = createSignal(readStoredBool(LS_TL_COLLAPSED));
+
+	const effectiveHeight = (): number => (collapsed() ? TL_COLLAPSED_HEIGHT : tlHeight());
+
+	createEffect(
+		on(
+			tlHeight,
+			(h) => {
+				if (typeof window !== "undefined") window.localStorage.setItem(LS_TL_HEIGHT, String(h));
+			},
+			{ defer: true },
+		),
+	);
+	createEffect(
+		on(
+			collapsed,
+			(c) => {
+				if (typeof window !== "undefined")
+					window.localStorage.setItem(LS_TL_COLLAPSED, c ? "1" : "0");
+			},
+			{ defer: true },
+		),
+	);
+
 	return (
-		<div class="app-shell" style={{ "--tl-height": `${tlHeight()}px` }}>
+		<div class="app-shell" style={{ "--tl-height": `${effectiveHeight()}px` }}>
 			<header class="app-topbar">
 				<Wordmark />
 				<TopbarPlayback />
@@ -205,13 +249,28 @@ const Shell = (): JSX.Element => {
 				<InspectorBody />
 			</aside>
 
-			<section class="app-timeline">
-				<TimelineResizer height={tlHeight} onHeight={setTlHeight} />
+			<section class={`app-timeline ${collapsed() ? "app-timeline--collapsed" : ""}`}>
+				<Show when={!collapsed()}>
+					<TimelineResizer height={tlHeight} onHeight={setTlHeight} />
+				</Show>
 				<div class="panel-head">
 					<span class="label">Timeline</span>
-					<span class="panel-head__index">03</span>
+					<button
+						type="button"
+						class="app-timeline__toggle"
+						aria-label={collapsed() ? "Expand timeline" : "Collapse timeline"}
+						aria-expanded={!collapsed()}
+						title={collapsed() ? "Expand timeline" : "Collapse timeline"}
+						onClick={() => setCollapsed((v) => !v)}
+					>
+						<span class="app-timeline__chevron" aria-hidden="true">
+							<ChevronDown size={16} strokeWidth={2.25} />
+						</span>
+					</button>
 				</div>
-				<TimelineBody />
+				<Show when={!collapsed()}>
+					<TimelineBody />
+				</Show>
 			</section>
 		</div>
 	);
@@ -224,9 +283,11 @@ const Root = (): JSX.Element => {
 			{(b) => (
 				<PlaybackProvider duration={b.scene.meta.duration}>
 					<PlaybackHotkeys />
-					<TimelineProvider name={b.name} duration={b.scene.meta.duration} timeline={b.timeline}>
-						<Shell />
-					</TimelineProvider>
+					<OverlayProvider name={b.name} overlay={b.overlay}>
+						<TimelineProvider name={b.name} duration={b.scene.meta.duration} timeline={b.timeline}>
+							<Shell />
+						</TimelineProvider>
+					</OverlayProvider>
 				</PlaybackProvider>
 			)}
 		</Show>

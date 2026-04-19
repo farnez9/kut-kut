@@ -1,4 +1,5 @@
 import {
+	applyOverlay,
 	applyTimeline,
 	type Compositor,
 	createCompositor,
@@ -8,7 +9,8 @@ import {
 	type Scene,
 } from "@kut-kut/engine";
 import type { JSX } from "solid-js";
-import { createEffect, createSignal, onCleanup, onMount } from "solid-js";
+import { createEffect, createSignal, onCleanup, onMount, useContext } from "solid-js";
+import { OverlayContext } from "../overlay/context.ts";
 import { usePlayback } from "../playback/index.ts";
 import { useTimeline } from "../timeline/context.ts";
 
@@ -19,6 +21,7 @@ export type PreviewHostProps = {
 export const PreviewHost = (props: PreviewHostProps): JSX.Element => {
 	const playback = usePlayback();
 	const timelineCtx = useTimeline();
+	const overlayCtx = useContext(OverlayContext);
 	let host!: HTMLDivElement;
 
 	const [size, setSize] = createSignal({ width: 0, height: 0 });
@@ -55,6 +58,7 @@ export const PreviewHost = (props: PreviewHostProps): JSX.Element => {
 
 	createEffect(() => {
 		const t = playback.time();
+		if (overlayCtx) applyOverlay(props.scene, overlayCtx.overlay);
 		applyTimeline(props.scene, timelineCtx.timeline, t);
 	});
 

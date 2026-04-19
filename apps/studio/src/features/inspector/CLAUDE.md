@@ -1,14 +1,26 @@
 # features/inspector
 
-Right-hand property panel bound to the timeline's selection. Read-only in session 08 — editing lands in session 09 together with the scene overlay state file.
+Right-hand property panel bound to the timeline's selection. Renders a read-only summary for clips and keyframes, and **editable** transform fields for scene nodes (writes go through the overlay feature).
 
 ## Contract
 
-- `<Inspector>` reads `useTimeline().view.selection`. If a keyframe is selected it renders the keyframe summary; otherwise it falls back to the clip summary; otherwise an empty-state prompt. Mount inside a `<TimelineProvider>`.
+- `<Inspector>` reads `useTimeline().view.selection`. Panel precedence: **keyframe > node > clip > empty**. `nodePath` is derived from the selected clip's track target on `selectClip` / `selectKeyframe`; a keyframe edit does not flip the panel to the node panel.
 - `<InspectorHint>` renders the ⌘Z / ⌘⇧Z hint shown in the panel head.
+- Mount inside a `<TimelineProvider>` **and** an `<OverlayProvider>`. The node panel reads the scene from `useProject().bundle()?.scene` and writes via `useOverlay().setOverride` / `getOverride`.
+
+## Node panel
+
+- 2D nodes (Rect, Layer2D, or Group with a 2D transform): six `NumberInput`s for `transform.{x,y,rotation,scaleX,scaleY,opacity}`.
+- 3D nodes (Layer3D, Box, or Group with a 3D transform): three `Vec3Input`s for `transform.{position,rotation,scale}` plus a `NumberInput` for `transform.opacity`.
+- Each input shows the **effective** value — the overlay override if present, else the scene factory's base value. Commits write through `setOverride`. There is no "clear override" control yet; typing the same value as the factory still persists an override. Flagged as Follow-up.
+
+## Input primitives
+
+`editors/NumberInput` and `editors/Vec3Input`. `NumberInput` uses a local draft signal and commits on blur / Enter / (non-input events), so typing partial numbers like `-0.` doesn't snap. Escape reverts. `Vec3Input` is three `NumberInput`s with axis labels.
 
 ## Non-scope
 
-- Property editing (session 09). Requires the overlay state file for scene-structure mutations.
-- Node hierarchy view, multi-select, grouped inspectors — later.
-- Editing clip start/end/duration via number inputs — session 09.
+- Non-transform property editors (color, material, per-node custom props) — next session.
+- Multi-select, grouped inspectors, node hierarchy tree — later.
+- Editing clip start/end/duration via number inputs — deferred (timeline handles drags).
+- "Has override" badge / clear-override button — polish.

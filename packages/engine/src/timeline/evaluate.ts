@@ -21,7 +21,6 @@ export const evaluateClip = (clip: Clip<number>, timeInClip: number): number | u
 			return k0.value + (k1.value - k0.value) * eased;
 		}
 	}
-	return undefined;
 };
 
 export const evaluateTrack = (track: Track, sceneTime: number): number | undefined => {
@@ -30,5 +29,4 @@ export const evaluateTrack = (track: Track, sceneTime: number): number | undefin
 		const value = evaluateClip(clip, sceneTime - clip.start);
 		if (value !== undefined) return value;
 	}
-	return undefined;
 };

@@ -1,10 +1,11 @@
-import type { TimelineJSON } from "@kut-kut/engine";
+import type { OverlayJSON, TimelineJSON } from "@kut-kut/engine";
 
 export type ProjectListing = { name: string; absolutePath: string };
 export type AssetRef = { path: string; size: number };
 export type ProjectState = {
 	name: string;
 	timeline: TimelineJSON | null;
+	overlay: OverlayJSON | null;
 	assets: AssetRef[];
 };
 
@@ -40,6 +41,14 @@ export const writeTimeline = async (name: string, timeline: TimelineJSON): Promi
 		method: "POST",
 		headers: { "content-type": "application/json" },
 		body: JSON.stringify({ timeline }),
+	});
+};
+
+export const writeOverlay = async (name: string, overlay: OverlayJSON): Promise<void> => {
+	await request(`/__kk/projects/${encodeURIComponent(name)}/overlay`, {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify({ overlay }),
 	});
 };
 

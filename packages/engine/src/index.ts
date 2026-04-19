@@ -1,4 +1,15 @@
 export {
+	applyOverlay,
+	CURRENT_OVERLAY_VERSION,
+	deserializeOverlay,
+	emptyOverlay,
+	type Overlay,
+	type OverlayJSON,
+	type OverrideValue,
+	type PropertyOverride,
+	parseOverlay,
+} from "./overlay/index.ts";
+export {
 	type BoxJSON,
 	CURRENT_SCHEMA_VERSION,
 	deserialize,

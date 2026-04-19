@@ -1,7 +1,16 @@
-import { type Clip, isTrackTargetByPath, type Keyframe, type Track } from "@kut-kut/engine";
+import {
+	type Clip,
+	findNodeByPath,
+	isTrackTargetByPath,
+	type Keyframe,
+	type Node,
+	type Track,
+} from "@kut-kut/engine";
 import type { JSX } from "solid-js";
 import { Match, Switch } from "solid-js";
+import { useProject } from "../project/index.ts";
 import { parseKeyframeId, useTimeline } from "../timeline/index.ts";
+import { NodePanel, type NodeSelection } from "./NodePanel.tsx";
 
 type ClipSelection = { track: Track; clip: Clip<number> };
 type KeyframeSelection = {
@@ -68,6 +77,7 @@ const EmptyPanel = (): JSX.Element => (
 
 export const Inspector = (): JSX.Element => {
 	const t = useTimeline();
+	const project = useProject();
 
 	const keyframeSelection = (): KeyframeSelection | null => {
 		const id = t.view.selection.keyframeId;
@@ -81,6 +91,16 @@ export const Inspector = (): JSX.Element => {
 		return { ...found, keyframe, index: parsed.index };
 	};
 
+	const nodeSelection = (): NodeSelection | null => {
+		const path = t.view.selection.nodePath;
+		if (!path) return null;
+		const scene = project.bundle()?.scene;
+		if (!scene) return null;
+		const node: Node | undefined = findNodeByPath(scene, path);
+		if (!node) return null;
+		return { node, nodePath: path };
+	};
+
 	const clipSelection = (): ClipSelection | null => {
 		const id = t.view.selection.clipId;
 		if (!id) return null;
@@ -91,6 +111,9 @@ export const Inspector = (): JSX.Element => {
 		<Switch fallback={<EmptyPanel />}>
 			<Match when={keyframeSelection()} keyed>
 				{(sel) => <KeyframePanel selection={sel} />}
+			</Match>
+			<Match when={nodeSelection()} keyed>
+				{(sel) => <NodePanel selection={sel} />}
 			</Match>
 			<Match when={clipSelection()} keyed>
 				{(sel) => <ClipPanel selection={sel} />}
