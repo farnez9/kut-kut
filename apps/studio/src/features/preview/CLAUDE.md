@@ -4,16 +4,16 @@ Canvas host for the engine compositor.
 
 ## Contract
 
-- `<PreviewHost scene timeline>` is the **only** component that mounts a `Compositor`.
+- `<PreviewHost scene>` is the **only** component that mounts a `Compositor`.
 - Lifecycle owned here:
   - `onMount` → `createCompositor(...)` → `compositor.mount()`
   - `ResizeObserver` on the host element → `compositor.setSize(w, h)`
-  - `createEffect(() => applyTimeline(scene, timeline, playback.time()))` is the single path from time to scene mutations
+  - `createEffect(() => applyTimeline(scene, useTimeline().timeline, playback.time()))` is the single path from time to scene mutations
   - `onCleanup` → disconnect observer, dispose compositor
 
 ## Project source
 
-`scene` and `timeline` come from `<ProjectProvider>` via `useProject().bundle()`. The provider loads them from `projects/<name>/scene.ts` (dynamic TS import) and `projects/<name>/timeline.json` (fetched from the project-fs dev plugin). See `features/project/CLAUDE.md` for the load sequence.
+`scene` comes from `<ProjectProvider>` via `useProject().bundle()`. The provider loads it by dynamically importing `projects/<name>/scene.ts`. `timeline` is **not** a prop — `PreviewHost` reads the reactive timeline store from `useTimeline()` so live edits (session 07 clip drags, session 08 keyframe mutations) propagate into the preview without remounting. See `features/project/CLAUDE.md` for the load sequence and `features/timeline/CLAUDE.md` for the store ownership.
 
 ## HMR
 

@@ -23,7 +23,7 @@ export default (): Scene => {
 		color: [0.22, 0.62, 1],
 	});
 	return createScene({
-		meta: { name: "example", width: 1920, height: 1080, fps: 30, duration: 4 },
+		meta: { name: "example", width: 1920, height: 1080, fps: 30, duration: 6 },
 		layers: [
 			createLayer2D({ name: "2D", children: [rect] }),
 			createLayer3D({ name: "3D", children: [box] }),

@@ -1,5 +1,5 @@
 import type { JSX } from "solid-js";
-import { Show, useContext } from "solid-js";
+import { createSignal, Show, useContext } from "solid-js";
 import { PlaybackContext } from "./features/playback/context.ts";
 import {
 	PlaybackControls,
@@ -13,6 +13,10 @@ import {
 	ProjectProvider,
 	useProject,
 } from "./features/project/index.ts";
+import { TimelineContext } from "./features/timeline/context.ts";
+import { TimelineProvider, TimelineResizer, TimelineView } from "./features/timeline/index.ts";
+
+const INITIAL_TIMELINE_HEIGHT = 260;
 
 const Wordmark = (): JSX.Element => (
 	<div class="wordmark">
@@ -89,7 +93,7 @@ const PreviewContent = (): JSX.Element => {
 						/>
 					}
 				>
-					{(b) => <PreviewHost scene={b.scene} timeline={b.timeline} />}
+					{(b) => <PreviewHost scene={b.scene} />}
 				</Show>
 			</Show>
 		</Show>
@@ -140,9 +144,26 @@ const PlaybackHotkeys = (): JSX.Element => {
 	return null;
 };
 
-const Shell = (): JSX.Element => {
+const TimelineBody = (): JSX.Element => {
+	const ctx = useContext(TimelineContext);
 	return (
-		<div class="app-shell">
+		<Show
+			when={ctx}
+			fallback={
+				<div class="tl-strip tl-strip--empty" aria-hidden="true">
+					<span class="label">Load a project to see its timeline.</span>
+				</div>
+			}
+		>
+			<TimelineView />
+		</Show>
+	);
+};
+
+const Shell = (): JSX.Element => {
+	const [tlHeight, setTlHeight] = createSignal(INITIAL_TIMELINE_HEIGHT);
+	return (
+		<div class="app-shell" style={{ "--tl-height": `${tlHeight()}px` }}>
 			<header class="app-topbar">
 				<Wordmark />
 				<TopbarPlayback />
@@ -177,20 +198,12 @@ const Shell = (): JSX.Element => {
 			</aside>
 
 			<section class="app-timeline">
+				<TimelineResizer height={tlHeight} onHeight={setTlHeight} />
 				<div class="panel-head">
 					<span class="label">Timeline</span>
 					<span class="panel-head__index">03</span>
 				</div>
-				<div class="strip" aria-hidden="true">
-					<div class="strip__ruler">
-						<span>00:00</span>
-						<span>01:00</span>
-						<span>02:00</span>
-						<span>03:00</span>
-						<span>04:00</span>
-					</div>
-					<div class="strip__body">Ruler + tracks — session 07</div>
-				</div>
+				<TimelineBody />
 			</section>
 		</div>
 	);
@@ -203,7 +216,9 @@ const Root = (): JSX.Element => {
 			{(b) => (
 				<PlaybackProvider duration={b.scene.meta.duration}>
 					<PlaybackHotkeys />
-					<Shell />
+					<TimelineProvider name={b.name} duration={b.scene.meta.duration} timeline={b.timeline}>
+						<Shell />
+					</TimelineProvider>
 				</PlaybackProvider>
 			)}
 		</Show>

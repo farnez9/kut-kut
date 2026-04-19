@@ -149,7 +149,7 @@ const writeTimelineHandler = async (
 	}
 	await fs.writeFile(
 		path.join(projectPath, "timeline.json"),
-		`${JSON.stringify(validated, null, 2)}\n`,
+		`${JSON.stringify(validated, null, "\t")}\n`,
 		"utf8",
 	);
 	jsonResponse(res, 200, { ok: true });

@@ -6,19 +6,19 @@ import {
 	createThreeLayerRenderer,
 	NodeType,
 	type Scene,
-	type Timeline,
 } from "@kut-kut/engine";
 import type { JSX } from "solid-js";
 import { createEffect, createSignal, onCleanup, onMount } from "solid-js";
 import { usePlayback } from "../playback/index.ts";
+import { useTimeline } from "../timeline/context.ts";
 
 export type PreviewHostProps = {
 	scene: Scene;
-	timeline: Timeline;
 };
 
 export const PreviewHost = (props: PreviewHostProps): JSX.Element => {
 	const playback = usePlayback();
+	const timelineCtx = useTimeline();
 	let host!: HTMLDivElement;
 
 	const [size, setSize] = createSignal({ width: 0, height: 0 });
@@ -55,7 +55,7 @@ export const PreviewHost = (props: PreviewHostProps): JSX.Element => {
 
 	createEffect(() => {
 		const t = playback.time();
-		applyTimeline(props.scene, props.timeline, t);
+		applyTimeline(props.scene, timelineCtx.timeline, t);
 	});
 
 	onCleanup(() => {
