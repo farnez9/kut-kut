@@ -17,8 +17,11 @@ import {
 	ProjectProvider,
 	useProject,
 } from "./features/project/index.ts";
+import { RecordProvider, RecordToggle } from "./features/record/index.ts";
 import { TimelineContext } from "./features/timeline/context.ts";
 import { TimelineProvider, TimelineResizer, TimelineView } from "./features/timeline/index.ts";
+import { CommandProvider } from "./lib/commands/index.ts";
+import { useUndoHotkeys } from "./lib/useUndoHotkeys.ts";
 
 const INITIAL_TIMELINE_HEIGHT = 260;
 const TL_COLLAPSED_HEIGHT = 44;
@@ -65,7 +68,10 @@ const TopbarPlayback = (): JSX.Element => {
 	const ctx = useContext(PlaybackContext);
 	return (
 		<Show when={ctx}>
-			<PlaybackControls />
+			<div class="topbar-mid">
+				<PlaybackControls />
+				<RecordToggle />
+			</div>
 		</Show>
 	);
 };
@@ -169,6 +175,11 @@ const aspectLabel = (b: ProjectBundle): string => {
 
 const PlaybackHotkeys = (): JSX.Element => {
 	useGlobalPlaybackHotkeys();
+	return null;
+};
+
+const UndoHotkeys = (): JSX.Element => {
+	useUndoHotkeys();
 	return null;
 };
 
@@ -309,11 +320,20 @@ const Root = (): JSX.Element => {
 			{(b) => (
 				<PlaybackProvider duration={b.scene.meta.duration}>
 					<PlaybackHotkeys />
-					<OverlayProvider name={b.name} overlay={b.overlay} factory={b.factory}>
-						<TimelineProvider name={b.name} duration={b.scene.meta.duration} timeline={b.timeline}>
-							<Shell />
-						</TimelineProvider>
-					</OverlayProvider>
+					<CommandProvider>
+						<UndoHotkeys />
+						<RecordProvider>
+							<OverlayProvider name={b.name} overlay={b.overlay} factory={b.factory}>
+								<TimelineProvider
+									name={b.name}
+									duration={b.scene.meta.duration}
+									timeline={b.timeline}
+								>
+									<Shell />
+								</TimelineProvider>
+							</OverlayProvider>
+						</RecordProvider>
+					</CommandProvider>
 				</PlaybackProvider>
 			)}
 		</Show>

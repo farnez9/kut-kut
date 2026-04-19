@@ -1,12 +1,6 @@
 # Kut-Kut — overview
 
-**Last updated:** 2026-04-19 (session 10 shipped; table renumbered)
-
-> **Session 08 scope split.** The original row 08 bundled (a) inspector editing, (b) node create/delete, (c) keyframe-record mode, and (d) undo/redo. Items (a)/(b)/(c) all depend on a scene overlay state file that ADR 0003 defers to a new ADR — too large to share the 2h budget. Session 08 shipped the undo/redo foundation plus clip trim and keyframe drag. The remainder moves to a new session 09 ("scene overlay + inspector editing + create/delete + record mode"), and every row numbered 09+ has been shifted down by one.
-
-> **Session 09 scope split.** Session 09 bundled four items: the overlay ADR + pipeline, inspector transform editing, node create/delete, and keyframe-record mode. The ADR + pipeline + transform editing alone already filled a ~2h budget once the cross-cutting plumbing (engine refactor, plugin endpoints, overlay feature slice) was counted. Session 09 therefore ships the ADR, the overlay pipeline (engine + plugin + feature slice + preview wiring), the timeline collapse toggle, and inspector transform editors only. Node create/delete and keyframe-record mode move to a new session 10 ("scene node create/delete + keyframe record mode"); every row numbered 10+ shifts down by one.
-
-> **Session 10 scope split.** Session 10 bundled node create/delete (via overlay v2) + Layers panel + keyframe-record mode. The structural-ops ADR, schema migration, engine `applyNodeOps`, overlay store mutators, Layers panel UI, and the PreviewHost remount strategy already filled a ~2h budget; record mode would have doubled it. Session 10 therefore ships the ADR (0007), overlay v2 migration, `applyNodeOps`, store mutators, and the Layers panel. Keyframe record mode + a generalized command store (overlay + timeline undo) move to a new session 11; every row numbered 11+ shifts down by one.
+**Last updated:** 2026-04-19 (session 11 shipped)
 
 ## Product
 
@@ -130,10 +124,7 @@ Each row is one ~2h working session. Drafted into `plans/sessions/session-NN-*.m
 
 ## Open questions
 
-- **Pixi + Three compositor:** WebGPU primary (PixiJS v8 native, Three.js `WebGPURenderer`) with WebGL fallback via Pixi's auto-fallback. Realistic v1 is two stacked canvases (one Pixi, one Three), each on WebGPU — sharing a `GPUDevice` across both libs is possible but fiddly; revisit in session 04 with a small spike.
-- **Undo/redo granularity:** resolved in session 08 — per-command, one drag = one command, store owned by `<TimelineProvider>`.
-- **Scene source format:** resolved in `plans/decisions/0003-scene-source-format.md` — TS is primary for authoring, JSON for runtime state. Session 17 still finalizes the `scene.ts` helper conventions.
-- **Plugin endpoint shape:** exact verbs and payload schema. Finalized in session 06.
+- **Pixi + Three compositor:** WebGPU primary (PixiJS v8 native, Three.js `WebGPURenderer`) with WebGL fallback via Pixi's auto-fallback. Realistic v1 is two stacked canvases (one Pixi, one Three), each on WebGPU — sharing a `GPUDevice` across both libs is possible but fiddly; revisit with a spike before export lands.
 
 ## Naming TBDs
 

@@ -1,9 +1,5 @@
 import { onCleanup, onMount } from "solid-js";
-
-export type UndoHotkeysOptions = {
-	undo: () => void;
-	redo: () => void;
-};
+import { useCommands } from "./commands/index.ts";
 
 const isEditableTarget = (el: EventTarget | null): boolean => {
 	if (!(el instanceof Element)) return false;
@@ -11,22 +7,26 @@ const isEditableTarget = (el: EventTarget | null): boolean => {
 	return el.matches?.('[contenteditable], [contenteditable="true"]') ?? false;
 };
 
-export const useUndoHotkeys = (opts: UndoHotkeysOptions): void => {
+export const useUndoHotkeys = (): void => {
+	const commands = useCommands();
+
 	const onKeydown = (e: KeyboardEvent): void => {
 		if (!(e.metaKey || e.ctrlKey)) return;
 		if (isEditableTarget(e.target)) return;
 		const key = e.key.toLowerCase();
 		if (key === "z" && !e.shiftKey) {
 			e.preventDefault();
-			opts.undo();
+			commands.undo();
 			return;
 		}
 		if ((key === "z" && e.shiftKey) || key === "y") {
 			e.preventDefault();
-			opts.redo();
+			commands.redo();
 		}
 	};
 
 	onMount(() => window.addEventListener("keydown", onKeydown));
 	onCleanup(() => window.removeEventListener("keydown", onKeydown));
 };
+
+export { isEditableTarget };

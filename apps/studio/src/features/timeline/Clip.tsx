@@ -43,7 +43,9 @@ export const Clip = (props: ClipProps): JSX.Element => {
 					t.selectClip(props.clip.id);
 					return;
 				}
-				t.push(moveClipCommand(props.trackId, props.clip.id, clipStart, props.clip.start));
+				t.push(
+					moveClipCommand(t.mutate, props.trackId, props.clip.id, clipStart, props.clip.start),
+				);
 			},
 		});
 	};
@@ -62,7 +64,15 @@ export const Clip = (props: ClipProps): JSX.Element => {
 			},
 			onEnd: () => {
 				if (props.clip.start === clipStart) return;
-				t.push(resizeClipLeftCommand(props.trackId, props.clip.id, clipStart, props.clip.start));
+				t.push(
+					resizeClipLeftCommand(
+						t.mutate,
+						props.trackId,
+						props.clip.id,
+						clipStart,
+						props.clip.start,
+					),
+				);
 			},
 		});
 	};
@@ -82,7 +92,9 @@ export const Clip = (props: ClipProps): JSX.Element => {
 			},
 			onEnd: () => {
 				if (props.clip.end === clipEnd) return;
-				t.push(resizeClipRightCommand(props.trackId, props.clip.id, clipEnd, props.clip.end));
+				t.push(
+					resizeClipRightCommand(t.mutate, props.trackId, props.clip.id, clipEnd, props.clip.end),
+				);
 			},
 		});
 	};

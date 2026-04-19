@@ -353,6 +353,16 @@ button:focus-visible {
 	letter-spacing: 0.18em;
 	text-transform: uppercase;
 	color: var(--paper-mute);
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.inspector__rec {
+	color: var(--hot);
+	font-size: 9px;
+	letter-spacing: 0.22em;
+	text-shadow: 0 0 4px var(--hot-glow);
 }
 
 .inspector__value {
@@ -536,7 +546,60 @@ button:focus-visible {
 	display: flex;
 	align-items: center;
 	gap: 18px;
+}
+
+.topbar-mid {
+	display: flex;
+	align-items: center;
+	gap: 18px;
 	justify-self: start;
+}
+
+.record-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 12px;
+	height: 30px;
+	border: 1px solid var(--rule);
+	background: var(--ink-2);
+	color: var(--paper-dim);
+	font-family: var(--font-mono);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	border-radius: 2px;
+	transition:
+		color 120ms ease,
+		border-color 120ms ease,
+		box-shadow 120ms ease,
+		background 120ms ease;
+	cursor: pointer;
+}
+
+.record-toggle:hover {
+	color: var(--paper);
+	background: var(--ink-3);
+}
+
+.record-toggle--active {
+	color: var(--hot);
+	border-color: var(--hot);
+	box-shadow: 0 0 0 1px var(--hot-glow);
+}
+
+.record-toggle__dot {
+	stroke: currentColor;
+	transition: filter 120ms ease;
+}
+
+.record-toggle--active .record-toggle__dot {
+	filter: drop-shadow(0 0 4px var(--hot-glow));
+}
+
+.record-toggle__label {
+	line-height: 1;
 }
 
 .playback__group {

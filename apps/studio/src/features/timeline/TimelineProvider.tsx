@@ -1,6 +1,7 @@
 import { isTrackTargetByPath, type Timeline } from "@kut-kut/engine";
 import type { JSX } from "solid-js";
 import { createStore } from "solid-js/store";
+import { useCommands } from "../../lib/commands/index.ts";
 import {
 	makeKeyframeId,
 	TimelineContext,
@@ -9,7 +10,6 @@ import {
 } from "./context.ts";
 import { useTimelinePersistence } from "./persistence.ts";
 import { createTimelineStore } from "./store.ts";
-import { useUndoHotkeys } from "./useUndoHotkeys.ts";
 
 export type TimelineProviderProps = {
 	name: string;
@@ -21,6 +21,7 @@ export type TimelineProviderProps = {
 const INITIAL_ZOOM = 120;
 
 export const TimelineProvider = (props: TimelineProviderProps): JSX.Element => {
+	const commands = useCommands();
 	const store = createTimelineStore(props.timeline);
 	const [view, setView] = createStore<TimelineView>({
 		zoom: INITIAL_ZOOM,
@@ -29,8 +30,6 @@ export const TimelineProvider = (props: TimelineProviderProps): JSX.Element => {
 	});
 
 	const { saveState, saveError } = useTimelinePersistence(() => props.name, store.timeline);
-
-	useUndoHotkeys({ undo: store.undo, redo: store.redo });
 
 	const nodePathForClip = (clipId: string): string[] | null => {
 		for (const track of store.timeline.tracks) {
@@ -46,16 +45,17 @@ export const TimelineProvider = (props: TimelineProviderProps): JSX.Element => {
 		timeline: store.timeline,
 		view,
 		setView,
+		mutate: store.mutate,
 		moveClip: store.moveClip,
 		resizeClipLeft: store.resizeClipLeft,
 		resizeClipRight: store.resizeClipRight,
 		setKeyframeTime: store.setKeyframeTime,
 		sortClipKeyframes: store.sortClipKeyframes,
-		push: store.push,
-		undo: store.undo,
-		redo: store.redo,
-		canUndo: store.canUndo,
-		canRedo: store.canRedo,
+		push: commands.push,
+		undo: commands.undo,
+		redo: commands.redo,
+		canUndo: commands.canUndo,
+		canRedo: commands.canRedo,
 		selectClip: (id) =>
 			setView("selection", {
 				clipId: id,

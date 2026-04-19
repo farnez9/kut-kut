@@ -13,8 +13,8 @@
 			"clips": [
 				{
 					"id": "c-rot",
-					"start": 0,
-					"end": 2.844,
+					"start": 0.091,
+					"end": 2.935,
 					"keyframes": [
 						{
 							"time": 0,
@@ -43,8 +43,8 @@
 			"clips": [
 				{
 					"id": "c-x",
-					"start": 0,
-					"end": 5.245,
+					"start": 0.061,
+					"end": 5.306,
 					"keyframes": [
 						{
 							"time": 0,
@@ -52,9 +52,24 @@
 							"easing": "ease-in-out-cubic"
 						},
 						{
+							"time": 0.569,
+							"value": 20,
+							"easing": "linear"
+						},
+						{
+							"time": 1.343,
+							"value": 20,
+							"easing": "linear"
+						},
+						{
 							"time": 2,
 							"value": 600,
 							"easing": "ease-in-out-cubic"
+						},
+						{
+							"time": 2.24,
+							"value": 20,
+							"easing": "linear"
 						},
 						{
 							"time": 4,
@@ -78,8 +93,8 @@
 			"clips": [
 				{
 					"id": "c-y",
-					"start": 0,
-					"end": 4,
+					"start": 0.059,
+					"end": 4.059,
 					"keyframes": [
 						{
 							"time": 0,

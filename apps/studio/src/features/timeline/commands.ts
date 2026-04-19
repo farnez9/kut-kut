@@ -1,10 +1,6 @@
-import type { Timeline } from "@kut-kut/engine";
-
-export type Command = {
-	label: string;
-	apply: (draft: Timeline) => void;
-	invert: (draft: Timeline) => void;
-};
+import type { Keyframe, Timeline } from "@kut-kut/engine";
+import type { Command } from "../../lib/commands/index.ts";
+import type { Mutator } from "./store.ts";
 
 const round = (v: number): number => Math.round(v * 1000) / 1000;
 
@@ -17,68 +13,78 @@ const findClip = (draft: Timeline, trackId: string, clipId: string) => {
 };
 
 export const moveClipCommand = (
+	mutate: Mutator,
 	trackId: string,
 	clipId: string,
 	prevStart: number,
 	nextStart: number,
 ): Command => {
-	const set = (draft: Timeline, start: number): void => {
-		const clip = findClip(draft, trackId, clipId);
-		if (!clip) return;
-		const duration = clip.end - clip.start;
-		clip.start = round(start);
-		clip.end = round(start + duration);
+	const set = (start: number): void => {
+		mutate((draft) => {
+			const clip = findClip(draft, trackId, clipId);
+			if (!clip) return;
+			const duration = clip.end - clip.start;
+			clip.start = round(start);
+			clip.end = round(start + duration);
+		});
 	};
 	return {
 		label: "Move clip",
-		apply: (draft) => set(draft, nextStart),
-		invert: (draft) => set(draft, prevStart),
+		apply: () => set(nextStart),
+		invert: () => set(prevStart),
 	};
 };
 
 export const resizeClipLeftCommand = (
+	mutate: Mutator,
 	trackId: string,
 	clipId: string,
 	prevStart: number,
 	nextStart: number,
 ): Command => {
-	const shiftTo = (draft: Timeline, target: number): void => {
-		const clip = findClip(draft, trackId, clipId);
-		if (!clip) return;
-		const next = round(target);
-		if (next === clip.start) return;
-		const delta = next - clip.start;
-		clip.start = next;
-		for (const kf of clip.keyframes) {
-			kf.time = round(kf.time - delta);
-		}
+	const shiftTo = (target: number): void => {
+		mutate((draft) => {
+			const clip = findClip(draft, trackId, clipId);
+			if (!clip) return;
+			const next = round(target);
+			if (next === clip.start) return;
+			const delta = next - clip.start;
+			clip.start = next;
+			for (const kf of clip.keyframes) {
+				kf.time = round(kf.time - delta);
+			}
+		});
 	};
 	return {
 		label: "Trim clip left",
-		apply: (draft) => shiftTo(draft, nextStart),
-		invert: (draft) => shiftTo(draft, prevStart),
+		apply: () => shiftTo(nextStart),
+		invert: () => shiftTo(prevStart),
 	};
 };
 
 export const resizeClipRightCommand = (
+	mutate: Mutator,
 	trackId: string,
 	clipId: string,
 	prevEnd: number,
 	nextEnd: number,
 ): Command => {
-	const set = (draft: Timeline, end: number): void => {
-		const clip = findClip(draft, trackId, clipId);
-		if (!clip) return;
-		clip.end = round(end);
+	const set = (end: number): void => {
+		mutate((draft) => {
+			const clip = findClip(draft, trackId, clipId);
+			if (!clip) return;
+			clip.end = round(end);
+		});
 	};
 	return {
 		label: "Trim clip right",
-		apply: (draft) => set(draft, nextEnd),
-		invert: (draft) => set(draft, prevEnd),
+		apply: () => set(nextEnd),
+		invert: () => set(prevEnd),
 	};
 };
 
 export const moveKeyframeCommand = (
+	mutate: Mutator,
 	trackId: string,
 	clipId: string,
 	prevIndex: number,
@@ -87,25 +93,72 @@ export const moveKeyframeCommand = (
 ): Command => {
 	let postIndex = -1;
 
-	const apply = (draft: Timeline): void => {
-		const clip = findClip(draft, trackId, clipId);
-		if (!clip) return;
-		const kf = clip.keyframes[prevIndex];
-		if (!kf) return;
-		kf.time = round(nextTime);
-		clip.keyframes.sort((a, b) => a.time - b.time);
-		postIndex = clip.keyframes.indexOf(kf);
+	const apply = (): void => {
+		mutate((draft) => {
+			const clip = findClip(draft, trackId, clipId);
+			if (!clip) return;
+			const kf = clip.keyframes[prevIndex];
+			if (!kf) return;
+			kf.time = round(nextTime);
+			clip.keyframes.sort((a, b) => a.time - b.time);
+			postIndex = clip.keyframes.indexOf(kf);
+		});
 	};
 
-	const invert = (draft: Timeline): void => {
-		const clip = findClip(draft, trackId, clipId);
-		if (!clip) return;
-		const idx = postIndex >= 0 ? postIndex : prevIndex;
-		const kf = clip.keyframes[idx];
-		if (!kf) return;
-		kf.time = round(prevTime);
-		clip.keyframes.sort((a, b) => a.time - b.time);
+	const invert = (): void => {
+		mutate((draft) => {
+			const clip = findClip(draft, trackId, clipId);
+			if (!clip) return;
+			const idx = postIndex >= 0 ? postIndex : prevIndex;
+			const kf = clip.keyframes[idx];
+			if (!kf) return;
+			kf.time = round(prevTime);
+			clip.keyframes.sort((a, b) => a.time - b.time);
+		});
 	};
 
 	return { label: "Move keyframe", apply, invert };
+};
+
+export const upsertKeyframeCommand = (
+	mutate: Mutator,
+	trackId: string,
+	clipId: string,
+	localTime: number,
+	prevKeyframe: Keyframe<number> | null,
+	easing: Keyframe<number>["easing"],
+	nextValue: number,
+): Command => {
+	const t = round(localTime);
+
+	const apply = (): void => {
+		mutate((draft) => {
+			const clip = findClip(draft, trackId, clipId);
+			if (!clip) return;
+			const existing = clip.keyframes.find((k) => round(k.time) === t);
+			if (existing) {
+				existing.value = nextValue;
+				return;
+			}
+			clip.keyframes.push({ time: t, value: nextValue, easing });
+			clip.keyframes.sort((a, b) => a.time - b.time);
+		});
+	};
+
+	const invert = (): void => {
+		mutate((draft) => {
+			const clip = findClip(draft, trackId, clipId);
+			if (!clip) return;
+			const idx = clip.keyframes.findIndex((k) => round(k.time) === t);
+			if (idx < 0) return;
+			if (prevKeyframe) {
+				clip.keyframes[idx] = { ...prevKeyframe };
+				clip.keyframes.sort((a, b) => a.time - b.time);
+				return;
+			}
+			clip.keyframes.splice(idx, 1);
+		});
+	};
+
+	return { label: prevKeyframe ? "Update keyframe" : "Add keyframe", apply, invert };
 };

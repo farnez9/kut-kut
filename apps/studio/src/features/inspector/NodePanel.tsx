@@ -2,9 +2,14 @@ import type { Node, Transform2D, Transform3D, Vec3 } from "@kut-kut/engine";
 import { NodeType, TransformKind } from "@kut-kut/engine";
 import type { JSX } from "solid-js";
 import { Show } from "solid-js";
+import { useCommands } from "../../lib/commands/index.ts";
 import { useOverlay } from "../overlay/index.ts";
+import { usePlayback } from "../playback/index.ts";
+import { useRecord } from "../record/index.ts";
+import { useTimeline } from "../timeline/index.ts";
 import { NumberInput } from "./editors/NumberInput.tsx";
 import { Vec3Input } from "./editors/Vec3Input.tsx";
+import { commitPropertyEdit, findNumberTrackCoverage, type RouteDeps } from "./routeCommit.ts";
 
 export type NodeSelection = { node: Node; nodePath: string[] };
 
@@ -30,6 +35,22 @@ const Row = (props: { label: string; value: string | number }): JSX.Element => (
 	</div>
 );
 
+const useRouteDeps = (): RouteDeps => ({
+	overlay: useOverlay(),
+	timeline: useTimeline(),
+	record: useRecord(),
+	commands: useCommands(),
+	playback: usePlayback(),
+});
+
+const RecIndicator = (props: { active: boolean }): JSX.Element => (
+	<Show when={props.active}>
+		<span class="inspector__rec" title="Will record keyframe">
+			● REC
+		</span>
+	</Show>
+);
+
 const Field2D = (props: {
 	nodePath: string[];
 	property: string;
@@ -38,40 +59,69 @@ const Field2D = (props: {
 	accessor: (t: Transform2D) => { get: () => number };
 	step?: number;
 }): JSX.Element => {
-	const overlay = useOverlay();
+	const deps = useRouteDeps();
 	const effective = (): number => {
-		const stored = overlay.getOverride(props.nodePath, props.property);
+		const stored = deps.overlay.getOverride(props.nodePath, props.property);
 		if (typeof stored === "number") return stored;
 		return props.accessor(props.transform).get();
 	};
+	const recordHot = (): boolean => {
+		if (!deps.record.active()) return false;
+		return (
+			findNumberTrackCoverage(
+				deps.timeline.timeline,
+				props.nodePath,
+				props.property,
+				deps.playback.time(),
+			) !== null
+		);
+	};
 	return (
 		<div class="inspector__field">
-			<span class="inspector__label">{props.label}</span>
+			<span class="inspector__label">
+				{props.label}
+				<RecIndicator active={recordHot()} />
+			</span>
 			<NumberInput
 				value={effective()}
 				step={props.step}
 				label={props.label}
-				onCommit={(v) => overlay.setOverride(props.nodePath, props.property, v)}
+				onCommit={(v) => commitPropertyEdit(deps, props.nodePath, props.property, v)}
 			/>
 		</div>
 	);
 };
 
 const FieldOpacity3D = (props: { nodePath: string[]; transform: Transform3D }): JSX.Element => {
-	const overlay = useOverlay();
+	const deps = useRouteDeps();
+	const property = "transform.opacity";
 	const effective = (): number => {
-		const stored = overlay.getOverride(props.nodePath, "transform.opacity");
+		const stored = deps.overlay.getOverride(props.nodePath, property);
 		if (typeof stored === "number") return stored;
 		return props.transform.opacity.get();
 	};
+	const recordHot = (): boolean => {
+		if (!deps.record.active()) return false;
+		return (
+			findNumberTrackCoverage(
+				deps.timeline.timeline,
+				props.nodePath,
+				property,
+				deps.playback.time(),
+			) !== null
+		);
+	};
 	return (
 		<div class="inspector__field">
-			<span class="inspector__label">opacity</span>
+			<span class="inspector__label">
+				opacity
+				<RecIndicator active={recordHot()} />
+			</span>
 			<NumberInput
 				value={effective()}
 				step={0.05}
 				label="opacity"
-				onCommit={(v) => overlay.setOverride(props.nodePath, "transform.opacity", v)}
+				onCommit={(v) => commitPropertyEdit(deps, props.nodePath, property, v)}
 			/>
 		</div>
 	);
@@ -84,9 +134,9 @@ const FieldVec3 = (props: {
 	label: string;
 	step?: number;
 }): JSX.Element => {
-	const overlay = useOverlay();
+	const deps = useRouteDeps();
 	const effective = (): Vec3 => {
-		const stored = overlay.getOverride(props.nodePath, props.property);
+		const stored = deps.overlay.getOverride(props.nodePath, props.property);
 		if (Array.isArray(stored)) return stored;
 		return props.initial();
 	};
@@ -96,7 +146,7 @@ const FieldVec3 = (props: {
 			<Vec3Input
 				value={effective()}
 				step={props.step}
-				onCommit={(v) => overlay.setOverride(props.nodePath, props.property, v)}
+				onCommit={(v) => commitPropertyEdit(deps, props.nodePath, props.property, v)}
 			/>
 		</div>
 	);

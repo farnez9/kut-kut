@@ -60,7 +60,16 @@ export const Keyframe = (props: KeyframeProps): JSX.Element => {
 					t.sortClipKeyframes(props.trackId, props.clip.id);
 					return;
 				}
-				t.push(moveKeyframeCommand(props.trackId, props.clip.id, startIndex, startTime, finalTime));
+				t.push(
+					moveKeyframeCommand(
+						t.mutate,
+						props.trackId,
+						props.clip.id,
+						startIndex,
+						startTime,
+						finalTime,
+					),
+				);
 			},
 			onCancel: () => {
 				t.setKeyframeTime(props.trackId, props.clip.id, startIndex, startTime);

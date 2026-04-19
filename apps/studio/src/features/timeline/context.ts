@@ -1,7 +1,8 @@
 import type { Timeline } from "@kut-kut/engine";
 import { type Accessor, createContext, useContext } from "solid-js";
 import type { SetStoreFunction, Store } from "solid-js/store";
-import type { Command } from "./commands.ts";
+import type { Command } from "../../lib/commands/index.ts";
+import type { Mutator } from "./store.ts";
 
 export type TimelineSelection = {
 	clipId: string | null;
@@ -34,6 +35,7 @@ export type TimelineContextValue = {
 	timeline: Store<Timeline>;
 	view: Store<TimelineView>;
 	setView: SetStoreFunction<TimelineView>;
+	mutate: Mutator;
 	moveClip: (trackId: string, clipId: string, newStart: number) => void;
 	resizeClipLeft: (trackId: string, clipId: string, newStart: number) => void;
 	resizeClipRight: (trackId: string, clipId: string, newEnd: number) => void;
