@@ -1,5 +1,6 @@
 import type { JSX } from "solid-js";
 import { createSignal, Show, useContext } from "solid-js";
+import { Inspector, InspectorHint } from "./features/inspector/index.ts";
 import { PlaybackContext } from "./features/playback/context.ts";
 import {
 	PlaybackControls,
@@ -160,6 +161,15 @@ const TimelineBody = (): JSX.Element => {
 	);
 };
 
+const InspectorBody = (): JSX.Element => {
+	const ctx = useContext(TimelineContext);
+	return (
+		<Show when={ctx} fallback={<p class="panel-body">Load a project to inspect selections.</p>}>
+			<Inspector />
+		</Show>
+	);
+};
+
 const Shell = (): JSX.Element => {
 	const [tlHeight, setTlHeight] = createSignal(INITIAL_TIMELINE_HEIGHT);
 	return (
@@ -190,11 +200,9 @@ const Shell = (): JSX.Element => {
 			<aside class="app-right">
 				<div class="panel-head">
 					<span class="label">Inspector</span>
-					<span class="panel-head__index">02</span>
+					<InspectorHint />
 				</div>
-				<p class="panel-body">
-					Property editors bind to the current selection in <em>session 08</em>.
-				</p>
+				<InspectorBody />
 			</aside>
 
 			<section class="app-timeline">

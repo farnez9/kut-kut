@@ -244,6 +244,14 @@ button:focus-visible {
 	letter-spacing: 0.22em;
 }
 
+.panel-head__hint {
+	font-family: var(--font-mono);
+	font-size: 10px;
+	color: var(--paper-ghost);
+	letter-spacing: 0.12em;
+	text-transform: none;
+}
+
 .panel-body {
 	color: var(--paper-dim);
 	font-size: 14px;
@@ -256,6 +264,51 @@ button:focus-visible {
 	font-family: var(--font-mono);
 	font-size: 13px;
 	letter-spacing: 0.04em;
+}
+
+/* ───── inspector ───── */
+
+.inspector__body {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.inspector__section {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	letter-spacing: 0.22em;
+	text-transform: uppercase;
+	color: var(--hot);
+	padding-bottom: 4px;
+	margin-bottom: 4px;
+	border-bottom: 1px solid var(--rule-soft);
+}
+
+.inspector__row {
+	display: grid;
+	grid-template-columns: 90px 1fr;
+	align-items: baseline;
+	gap: 10px;
+	font-size: 13px;
+	line-height: 1.4;
+}
+
+.inspector__label {
+	font-family: var(--font-mono);
+	font-size: 10px;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: var(--paper-mute);
+}
+
+.inspector__value {
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums;
+	color: var(--paper);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 /* ───── preview region (film-gate framing) ───── */
@@ -615,17 +668,106 @@ button:focus-visible {
 	height: 0;
 }
 
+.tl-clip__handle {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 6px;
+	cursor: col-resize;
+	touch-action: none;
+	z-index: 2;
+}
+
+.tl-clip__handle--left {
+	left: 0;
+}
+
+.tl-clip__handle--right {
+	right: 0;
+}
+
+.tl-clip__handle::after {
+	content: "";
+	position: absolute;
+	top: 4px;
+	bottom: 4px;
+	left: 2px;
+	width: 2px;
+	background: transparent;
+	transition: background 120ms ease;
+}
+
+.tl-clip__handle:hover::after,
+.tl-clip__handle:active::after {
+	background: var(--hot);
+}
+
 .tl-keyframe {
 	position: absolute;
-	top: -4px;
-	width: 8px;
-	height: 8px;
-	background: var(--hot);
-	rotate: 45deg;
-	transform-origin: center;
-	border-radius: 1px;
+	top: -6px;
+	width: 12px;
+	height: 12px;
 	pointer-events: auto;
-	cursor: default;
+	cursor: grab;
+	z-index: 3;
+	clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+	background: var(--hot);
+}
+
+.tl-keyframe:active {
+	cursor: grabbing;
+}
+
+.tl-keyframe--easing-linear {
+	background: var(--hot);
+}
+
+/* Right half filled: ease-in — slow start, fast finish, weight at the end */
+.tl-keyframe--easing-in {
+	background: linear-gradient(to right, transparent 50%, var(--hot) 50%);
+}
+
+/* Left half filled: ease-out — fast start, slow finish, weight at the start */
+.tl-keyframe--easing-out {
+	background: linear-gradient(to left, transparent 50%, var(--hot) 50%);
+}
+
+/* Solid diamond with a dark core dot: ease-in-out */
+.tl-keyframe--easing-inout {
+	background: var(--hot);
+}
+
+.tl-keyframe--easing-inout::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 4px;
+	height: 4px;
+	background: var(--ink-0);
+	border-radius: 50%;
+	transform: translate(-50%, -50%);
+}
+
+/* Hollow diamond: step-hold */
+.tl-keyframe--easing-step {
+	background: var(--hot);
+}
+
+.tl-keyframe--easing-step::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 6px;
+	height: 6px;
+	background: var(--ink-0);
+	clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+	transform: translate(-50%, -50%);
+}
+
+.tl-keyframe--selected {
+	filter: drop-shadow(0 0 1px var(--hot)) drop-shadow(0 0 3px var(--hot-glow));
 }
 
 .tl-playhead {

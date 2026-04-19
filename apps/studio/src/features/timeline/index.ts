@@ -1,6 +1,10 @@
 export {
+	makeKeyframeId,
+	parseKeyframeId,
+	TimelineContext,
 	type TimelineContextValue,
 	type TimelineSaveState,
+	type TimelineSelection,
 	type TimelineView as TimelineViewState,
 	useTimeline,
 } from "./context.ts";

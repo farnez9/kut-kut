@@ -1,6 +1,8 @@
 # Kut-Kut — overview
 
-**Last updated:** 2026-04-19 (session 06 shipped)
+**Last updated:** 2026-04-19 (session 08 shipped; table renumbered)
+
+> **Session 08 scope split.** The original row 08 bundled (a) inspector editing, (b) node create/delete, (c) keyframe-record mode, and (d) undo/redo. Items (a)/(b)/(c) all depend on a scene overlay state file that ADR 0003 defers to a new ADR — too large to share the 2h budget. Session 08 shipped the undo/redo foundation plus clip trim and keyframe drag. The remainder moves to a new session 09 ("scene overlay + inspector editing + create/delete + record mode"), and every row numbered 09+ has been shifted down by one.
 
 ## Product
 
@@ -101,16 +103,17 @@ Each row is one ~2h working session. Drafted into `plans/sessions/session-NN-*.m
 | 05  | Studio: app shell + preview                     | Layout (top bar / sidebars / center preview / bottom timeline), preview mounts engine with an in-memory demo scene, playback controls + hotkeys (space / home) |
 | 06  | Studio: Vite project-fs plugin + project loader | Plugin endpoints (list / read / write timeline / upload asset), studio-side client, boot flow that lists `projects/` and dynamically imports `scene.ts` |
 | 07  | Studio: interactive timeline                    | Ruler with draggable playhead, track rows, draggable clips, keyframe markers, zoom/pan; edits persist via plugin |
-| 08  | Studio: inspector + scene editing + undo/redo   | Property editors bound to selection, create/delete nodes, undo/redo via command store, keyframe-record mode |
-| 09  | Engine: audio core                              | AudioTrack/AudioClip, decode on import, waveform peaks (offline), playback synced to timeline clock |
-| 10  | Studio: audio panel                             | Import UI (blob → plugin → `assets/`), waveform in timeline, per-track volume/mute |
-| 11  | Voiceover recording                             | MediaRecorder wired to live playback, blob → plugin → `assets/`, added as audio clip |
-| 12  | Captions                                        | Caption track type, editor bound to timeline or audio track, 2D text overlay in preview, SRT/VTT import/export |
-| 13  | TTS: adapters + panel                           | Provider iface, WebSpeech adapter, ElevenLabs adapter (key from `VITE_ELEVENLABS_API_KEY`), studio panel, output saved via plugin as an audio clip |
-| 14  | Engine: export pipeline                         | WebCodecs video + audio encode, mp4-muxer, progress/cancel, browser download; export dialog in studio |
-| 15  | Short-form vertical mode + aspect presets       | 16:9 / 9:16 / 1:1 presets, safe-zone guides, per-aspect export configs |
-| 16  | Code-first scene authoring polish               | `scene.ts` conventions and helpers, HMR story for scene edits, starter examples (empty 2D, empty 3D) |
-| 17+ | Polish: shortcuts, a11y, perf profiling, docs, engine publish prep | Final cleanup before publishing `@kut-kut/engine` |
+| 08  | Studio: command store + clip/keyframe edits     | Command store with undo/redo, clip trim handles, keyframe time drag, read-only inspector panel bound to selection |
+| 09  | Studio: scene overlay + inspector editing       | Overlay state file (new ADR), inspector property editors bound to selection, create/delete nodes, keyframe-record mode |
+| 10  | Engine: audio core                              | AudioTrack/AudioClip, decode on import, waveform peaks (offline), playback synced to timeline clock |
+| 11  | Studio: audio panel                             | Import UI (blob → plugin → `assets/`), waveform in timeline, per-track volume/mute |
+| 12  | Voiceover recording                             | MediaRecorder wired to live playback, blob → plugin → `assets/`, added as audio clip |
+| 13  | Captions                                        | Caption track type, editor bound to timeline or audio track, 2D text overlay in preview, SRT/VTT import/export |
+| 14  | TTS: adapters + panel                           | Provider iface, WebSpeech adapter, ElevenLabs adapter (key from `VITE_ELEVENLABS_API_KEY`), studio panel, output saved via plugin as an audio clip |
+| 15  | Engine: export pipeline                         | WebCodecs video + audio encode, mp4-muxer, progress/cancel, browser download; export dialog in studio |
+| 16  | Short-form vertical mode + aspect presets       | 16:9 / 9:16 / 1:1 presets, safe-zone guides, per-aspect export configs |
+| 17  | Code-first scene authoring polish               | `scene.ts` conventions and helpers, HMR story for scene edits, starter examples (empty 2D, empty 3D) |
+| 18+ | Polish: shortcuts, a11y, perf profiling, docs, engine publish prep | Final cleanup before publishing `@kut-kut/engine` |
 
 ## Performance & memory budgets
 
@@ -122,8 +125,8 @@ Each row is one ~2h working session. Drafted into `plans/sessions/session-NN-*.m
 ## Open questions
 
 - **Pixi + Three compositor:** WebGPU primary (PixiJS v8 native, Three.js `WebGPURenderer`) with WebGL fallback via Pixi's auto-fallback. Realistic v1 is two stacked canvases (one Pixi, one Three), each on WebGPU — sharing a `GPUDevice` across both libs is possible but fiddly; revisit in session 04 with a small spike.
-- **Undo/redo granularity:** per-property or per-command batching. Decide at session 08 with real workflows in front of us.
-- **Scene source format:** resolved in `plans/decisions/0003-scene-source-format.md` — TS is primary for authoring, JSON for runtime state. Session 16 still finalizes the `scene.ts` helper conventions.
+- **Undo/redo granularity:** resolved in session 08 — per-command, one drag = one command, store owned by `<TimelineProvider>`.
+- **Scene source format:** resolved in `plans/decisions/0003-scene-source-format.md` — TS is primary for authoring, JSON for runtime state. Session 17 still finalizes the `scene.ts` helper conventions.
 - **Plugin endpoint shape:** exact verbs and payload schema. Finalized in session 06.
 
 ## Naming TBDs

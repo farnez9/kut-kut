@@ -1,9 +1,15 @@
 import type { Timeline } from "@kut-kut/engine";
 import type { JSX } from "solid-js";
 import { createStore } from "solid-js/store";
-import { TimelineContext, type TimelineContextValue, type TimelineView } from "./context.ts";
+import {
+	makeKeyframeId,
+	TimelineContext,
+	type TimelineContextValue,
+	type TimelineView,
+} from "./context.ts";
 import { useTimelinePersistence } from "./persistence.ts";
 import { createTimelineStore } from "./store.ts";
+import { useUndoHotkeys } from "./useUndoHotkeys.ts";
 
 export type TimelineProviderProps = {
 	name: string;
@@ -15,23 +21,37 @@ export type TimelineProviderProps = {
 const INITIAL_ZOOM = 120;
 
 export const TimelineProvider = (props: TimelineProviderProps): JSX.Element => {
-	const { timeline, moveClip } = createTimelineStore(props.timeline);
+	const store = createTimelineStore(props.timeline);
 	const [view, setView] = createStore<TimelineView>({
 		zoom: INITIAL_ZOOM,
 		origin: 0,
-		selection: null,
+		selection: { clipId: null, keyframeId: null },
 	});
 
-	const { saveState, saveError } = useTimelinePersistence(() => props.name, timeline);
+	const { saveState, saveError } = useTimelinePersistence(() => props.name, store.timeline);
+
+	useUndoHotkeys({ undo: store.undo, redo: store.redo });
 
 	const value: TimelineContextValue = {
 		name: () => props.name,
 		duration: () => props.duration,
-		timeline,
+		timeline: store.timeline,
 		view,
 		setView,
-		moveClip,
-		selectClip: (id) => setView("selection", id),
+		moveClip: store.moveClip,
+		resizeClipLeft: store.resizeClipLeft,
+		resizeClipRight: store.resizeClipRight,
+		setKeyframeTime: store.setKeyframeTime,
+		sortClipKeyframes: store.sortClipKeyframes,
+		push: store.push,
+		undo: store.undo,
+		redo: store.redo,
+		canUndo: store.canUndo,
+		canRedo: store.canRedo,
+		selectClip: (id) => setView("selection", { clipId: id, keyframeId: null }),
+		selectKeyframe: (clipId, index) =>
+			setView("selection", { clipId, keyframeId: makeKeyframeId(clipId, index) }),
+		clearSelection: () => setView("selection", { clipId: null, keyframeId: null }),
 		saveState,
 		saveError,
 	};
