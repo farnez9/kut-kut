@@ -1,4 +1,13 @@
 export {
+	type AudioBufferLike,
+	type AudioPlayer,
+	type AudioPlayerOptions,
+	computePeaks,
+	createAudioPlayer,
+	decodeAudio,
+	type Peaks,
+} from "./audio/index.ts";
+export {
 	applyNodeOps,
 	applyOverlay,
 	CURRENT_OVERLAY_VERSION,
@@ -15,6 +24,8 @@ export {
 	parseOverlay,
 } from "./overlay/index.ts";
 export {
+	type AudioClipJSON,
+	type AudioTrackJSON,
 	type BoxJSON,
 	CURRENT_SCHEMA_VERSION,
 	deserialize,
@@ -97,12 +108,18 @@ export {
 	type Vec3,
 } from "./scene/index.ts";
 export {
+	type AudioClip,
+	type AudioTrack,
 	applyTimeline,
 	type Clip,
+	type CreateAudioClipOptions,
+	type CreateAudioTrackOptions,
 	type CreateClipOptions,
 	type CreateKeyframeOptions,
 	type CreateTimelineOptions,
 	type CreateTrackOptions,
+	createAudioClip,
+	createAudioTrack,
 	createClip,
 	createKeyframe,
 	createPlaybackController,
@@ -113,6 +130,8 @@ export {
 	easings,
 	evaluateClip,
 	evaluateTrack,
+	isAudioTrack,
+	isNumberTrack,
 	isTrackTargetByPath,
 	type Keyframe,
 	type NumberTrack,

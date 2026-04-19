@@ -12,7 +12,7 @@ import {
 	TransformKind,
 } from "../scene/transform.ts";
 import { createTimeline } from "../timeline/factories.ts";
-import type { Timeline } from "../timeline/types.ts";
+import { isAudioTrack, type Timeline, type Track } from "../timeline/types.ts";
 import type {
 	BoxJSON,
 	GroupJSON,
@@ -22,6 +22,7 @@ import type {
 	RectJSON,
 	SceneJSON,
 	TimelineJSON,
+	TrackJSON,
 	Transform2DJSON,
 	Transform3DJSON,
 	TransformJSON,
@@ -110,8 +111,25 @@ export const serializeScene = (scene: Scene): SceneJSON => ({
 	layers: scene.layers.map(serializeLayer),
 });
 
-export const serializeTimeline = (timeline: Timeline): TimelineJSON => ({
-	tracks: timeline.tracks.map((track) => ({
+const serializeTrack = (track: Track): TrackJSON => {
+	if (isAudioTrack(track)) {
+		return {
+			id: track.id,
+			kind: track.kind,
+			gain: track.gain,
+			muted: track.muted,
+			clips: track.clips.map((clip) => ({
+				id: clip.id,
+				src: clip.src,
+				start: clip.start,
+				end: clip.end,
+				offset: clip.offset,
+				gain: clip.gain,
+				muted: clip.muted,
+			})),
+		};
+	}
+	return {
 		id: track.id,
 		kind: track.kind,
 		target: { ...track.target },
@@ -121,7 +139,11 @@ export const serializeTimeline = (timeline: Timeline): TimelineJSON => ({
 			end: clip.end,
 			keyframes: clip.keyframes.map((k) => ({ time: k.time, value: k.value, easing: k.easing })),
 		})),
-	})),
+	};
+};
+
+export const serializeTimeline = (timeline: Timeline): TimelineJSON => ({
+	tracks: timeline.tracks.map(serializeTrack),
 });
 
 export const serialize = (scene: Scene, timeline: Timeline = createTimeline()): ProjectJSON => ({

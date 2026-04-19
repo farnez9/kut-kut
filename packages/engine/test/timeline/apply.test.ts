@@ -9,6 +9,8 @@ import {
 import { EasingName } from "../../src/timeline/easing.ts";
 import {
 	applyTimeline,
+	createAudioClip,
+	createAudioTrack,
 	createClip,
 	createKeyframe,
 	createTimeline,
@@ -88,6 +90,20 @@ describe("applyTimeline", () => {
 		if (!layer || layer.transform.kind !== "2d") throw new Error("unreachable");
 		expect(inner.transform.x.get()).toBeCloseTo(75, 10);
 		expect(layer.transform.opacity.get()).toBeCloseTo(0.5, 10);
+	});
+
+	test("ignores audio tracks (they do not drive scene properties)", () => {
+		const { scene, timeline } = buildSceneWithTimeline();
+		timeline.tracks.push(
+			createAudioTrack({
+				id: "aud",
+				clips: [createAudioClip({ id: "ac", src: "assets/x.mp3", start: 0, end: 2 })],
+			}),
+		);
+		expect(() => applyTimeline(scene, timeline, 0.5)).not.toThrow();
+		const inner = findNodeById(scene, "g-inner");
+		if (!inner || inner.transform.kind !== "2d") throw new Error("unreachable");
+		expect(inner.transform.x.get()).toBeCloseTo(25, 10);
 	});
 
 	test("silently skips tracks whose target does not resolve", () => {

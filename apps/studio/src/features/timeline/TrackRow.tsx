@@ -1,12 +1,12 @@
-import { isTrackTargetByPath, type Track } from "@kut-kut/engine";
+import { isTrackTargetByPath, type NumberTrack } from "@kut-kut/engine";
 import { For, type JSX } from "solid-js";
 import { Clip } from "./Clip.tsx";
 
 export type TrackRowProps = {
-	track: Track;
+	track: NumberTrack;
 };
 
-const labelFor = (track: Track): string => {
+const labelFor = (track: NumberTrack): string => {
 	const target = track.target;
 	const nodeLabel = isTrackTargetByPath(target) ? target.nodePath.join(" › ") : target.nodeId;
 	return `${nodeLabel} · ${target.property}`;

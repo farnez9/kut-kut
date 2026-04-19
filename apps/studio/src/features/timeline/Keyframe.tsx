@@ -1,4 +1,9 @@
-import type { Clip, EasingName, Keyframe as KeyframeData } from "@kut-kut/engine";
+import {
+	type Clip,
+	type EasingName,
+	isNumberTrack,
+	type Keyframe as KeyframeData,
+} from "@kut-kut/engine";
 import type { JSX } from "solid-js";
 import { moveKeyframeCommand } from "./commands.ts";
 import { useTimeline } from "./context.ts";
@@ -54,7 +59,10 @@ export const Keyframe = (props: KeyframeProps): JSX.Element => {
 					return;
 				}
 				const track = t.timeline.tracks.find((tr) => tr.id === props.trackId);
-				const clip = track?.clips.find((c) => c.id === props.clip.id);
+				const clip =
+					track && isNumberTrack(track)
+						? track.clips.find((c) => c.id === props.clip.id)
+						: undefined;
 				const finalTime = clip?.keyframes[startIndex]?.time ?? startTime;
 				if (finalTime === startTime) {
 					t.sortClipKeyframes(props.trackId, props.clip.id);

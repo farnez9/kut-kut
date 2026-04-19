@@ -1,9 +1,12 @@
 import { EasingName } from "./easing.ts";
 import {
+	type AudioClip,
+	type AudioTrack,
 	type Clip,
 	type Keyframe,
 	type NumberTrack,
 	type Timeline,
+	type Track,
 	TrackKind,
 	type TrackTarget,
 } from "./types.ts";
@@ -53,8 +56,48 @@ export const createTrack = (options: CreateTrackOptions): NumberTrack => ({
 	clips: options.clips ?? [],
 });
 
+export type CreateAudioClipOptions = {
+	id?: string;
+	src: string;
+	start: number;
+	end: number;
+	offset?: number;
+	gain?: number;
+	muted?: boolean;
+};
+
+export const createAudioClip = (options: CreateAudioClipOptions): AudioClip => {
+	if (options.end < options.start) {
+		throw new Error(`AudioClip end (${options.end}) precedes start (${options.start})`);
+	}
+	return {
+		id: options.id ?? crypto.randomUUID(),
+		src: options.src,
+		start: options.start,
+		end: options.end,
+		offset: options.offset ?? 0,
+		gain: options.gain ?? 1,
+		muted: options.muted ?? false,
+	};
+};
+
+export type CreateAudioTrackOptions = {
+	id?: string;
+	clips?: AudioClip[];
+	gain?: number;
+	muted?: boolean;
+};
+
+export const createAudioTrack = (options: CreateAudioTrackOptions = {}): AudioTrack => ({
+	id: options.id ?? crypto.randomUUID(),
+	kind: TrackKind.Audio,
+	clips: options.clips ?? [],
+	gain: options.gain ?? 1,
+	muted: options.muted ?? false,
+});
+
 export type CreateTimelineOptions = {
-	tracks?: NumberTrack[];
+	tracks?: Track[];
 };
 
 export const createTimeline = (options: CreateTimelineOptions = {}): Timeline => ({

@@ -2,6 +2,7 @@ import type { EasingName } from "./easing.ts";
 
 export const TrackKind = {
 	Number: "number",
+	Audio: "audio",
 } as const;
 
 export type TrackKind = (typeof TrackKind)[keyof typeof TrackKind];
@@ -41,7 +42,30 @@ export type NumberTrack = {
 	clips: Clip<number>[];
 };
 
-export type Track = NumberTrack;
+export type AudioClip = {
+	id: string;
+	src: string;
+	start: number;
+	end: number;
+	offset: number;
+	gain: number;
+	muted: boolean;
+};
+
+export type AudioTrack = {
+	id: string;
+	kind: typeof TrackKind.Audio;
+	clips: AudioClip[];
+	gain: number;
+	muted: boolean;
+};
+
+export type Track = NumberTrack | AudioTrack;
+
+export const isNumberTrack = (track: Track): track is NumberTrack =>
+	track.kind === TrackKind.Number;
+
+export const isAudioTrack = (track: Track): track is AudioTrack => track.kind === TrackKind.Audio;
 
 export type Timeline = {
 	tracks: Track[];

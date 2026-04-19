@@ -1,4 +1,4 @@
-import { isTrackTargetByPath, type Timeline } from "@kut-kut/engine";
+import { isNumberTrack, isTrackTargetByPath, type Timeline } from "@kut-kut/engine";
 import type { JSX } from "solid-js";
 import { createStore } from "solid-js/store";
 import { useCommands } from "../../lib/commands/index.ts";
@@ -33,6 +33,7 @@ export const TimelineProvider = (props: TimelineProviderProps): JSX.Element => {
 
 	const nodePathForClip = (clipId: string): string[] | null => {
 		for (const track of store.timeline.tracks) {
+			if (!isNumberTrack(track)) continue;
 			if (!track.clips.some((c) => c.id === clipId)) continue;
 			return isTrackTargetByPath(track.target) ? [...track.target.nodePath] : null;
 		}

@@ -1,5 +1,6 @@
+import { isNumberTrack } from "@kut-kut/engine";
 import type { JSX } from "solid-js";
-import { createEffect, createSignal, For, onCleanup, onMount, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js";
 import { usePlayback } from "../playback/index.ts";
 import { useTimeline } from "./context.ts";
 import { LABEL_WIDTH } from "./layout.ts";
@@ -86,20 +87,22 @@ export const TimelineView = (): JSX.Element => {
 		t.selectClip(null);
 	};
 
+	const numberTracks = createMemo(() => t.timeline.tracks.filter(isNumberTrack));
+
 	return (
 		<div class="tl-strip" ref={container} onWheel={onWheel}>
 			<SaveIndicator />
 			<Ruler laneWidth={laneWidth} />
 			<div class="tl-body" onPointerDown={onBodyPointerDown}>
 				<Show
-					when={t.timeline.tracks.length > 0}
+					when={numberTracks().length > 0}
 					fallback={
 						<div class="tl-body__empty">
 							<span class="label">No tracks yet — add one in session 08.</span>
 						</div>
 					}
 				>
-					<For each={t.timeline.tracks}>{(track) => <TrackRow track={track} />}</For>
+					<For each={numberTracks()}>{(track) => <TrackRow track={track} />}</For>
 				</Show>
 			</div>
 			<Playhead laneWidth={laneWidth} />

@@ -1,9 +1,11 @@
 import {
 	type Clip,
 	findNodeByPath,
+	isNumberTrack,
 	isTrackTargetByPath,
 	type Keyframe,
 	type Node,
+	type NumberTrack,
 	type Track,
 } from "@kut-kut/engine";
 import type { JSX } from "solid-js";
@@ -12,9 +14,9 @@ import { useOverlay } from "../overlay/index.ts";
 import { parseKeyframeId, useTimeline } from "../timeline/index.ts";
 import { NodePanel, type NodeSelection } from "./NodePanel.tsx";
 
-type ClipSelection = { track: Track; clip: Clip<number> };
+type ClipSelection = { track: NumberTrack; clip: Clip<number> };
 type KeyframeSelection = {
-	track: Track;
+	track: NumberTrack;
 	clip: Clip<number>;
 	keyframe: Keyframe<number>;
 	index: number;
@@ -22,13 +24,14 @@ type KeyframeSelection = {
 
 const findClip = (tracks: readonly Track[], clipId: string): ClipSelection | null => {
 	for (const track of tracks) {
+		if (!isNumberTrack(track)) continue;
 		const clip = track.clips.find((c) => c.id === clipId);
 		if (clip) return { track, clip };
 	}
 	return null;
 };
 
-const targetLabel = (track: Track): string => {
+const targetLabel = (track: NumberTrack): string => {
 	const target = track.target;
 	const node = isTrackTargetByPath(target) ? target.nodePath.join(" › ") : target.nodeId;
 	return `${node} · ${target.property}`;

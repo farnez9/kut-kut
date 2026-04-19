@@ -1,5 +1,6 @@
 import {
 	EasingName,
+	isNumberTrack,
 	isTrackTargetByPath,
 	type Keyframe,
 	type OverrideValue,
@@ -30,6 +31,7 @@ export const findNumberTrackCoverage = (
 	t: number,
 ): NumberTrackCoverage | null => {
 	for (const track of timeline.tracks) {
+		if (!isNumberTrack(track)) continue;
 		const target = track.target;
 		if (!isTrackTargetByPath(target)) continue;
 		if (target.property !== property) continue;

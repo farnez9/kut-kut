@@ -1,4 +1,4 @@
-import type { Keyframe, Timeline } from "@kut-kut/engine";
+import { isNumberTrack, type Keyframe, type Timeline } from "@kut-kut/engine";
 import type { Command } from "../../lib/commands/index.ts";
 import type { Mutator } from "./store.ts";
 
@@ -6,7 +6,7 @@ const round = (v: number): number => Math.round(v * 1000) / 1000;
 
 const findClip = (draft: Timeline, trackId: string, clipId: string) => {
 	const track = draft.tracks.find((t) => t.id === trackId);
-	if (!track) return null;
+	if (!track || !isNumberTrack(track)) return null;
 	const clip = track.clips.find((c) => c.id === clipId);
 	if (!clip) return null;
 	return clip;

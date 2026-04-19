@@ -16,11 +16,15 @@ import {
 	createTransform3D,
 } from "../src/scene/index.ts";
 import {
+	createAudioClip,
+	createAudioTrack,
 	createClip,
 	createKeyframe,
 	createTimeline,
 	createTrack,
 	EasingName,
+	isAudioTrack,
+	isNumberTrack,
 } from "../src/timeline/index.ts";
 
 const buildFixtureScene = () => {
@@ -156,13 +160,15 @@ describe("project roundtrip", () => {
 		const scene = buildFixtureScene();
 		const rebuilt = deserialize(serialize(scene, buildFixtureTimeline()));
 		expect(rebuilt.timeline.tracks).toHaveLength(2);
-		rebuilt.timeline.tracks[0]?.clips.push({
+		const first = rebuilt.timeline.tracks[0];
+		if (!first || !isNumberTrack(first)) throw new Error("expected number track");
+		first.clips.push({
 			id: "new",
 			start: 9,
 			end: 10,
 			keyframes: [],
 		});
-		expect(rebuilt.timeline.tracks[0]?.clips).toHaveLength(3);
+		expect(first.clips).toHaveLength(3);
 	});
 
 	test("invalid payloads throw structured errors", () => {
@@ -216,6 +222,71 @@ describe("project roundtrip", () => {
 		expect(() => deserialize({ schemaVersion: 99, scene: {}, timeline: { tracks: [] } })).toThrow(
 			UnknownSchemaVersionError,
 		);
+	});
+
+	test("schemaVersion 1 projects migrate to current version as-is", () => {
+		const scene = buildFixtureScene();
+		const v2 = serialize(scene, buildFixtureTimeline());
+		const v1 = { ...v2, schemaVersion: 1 };
+		const rebuilt = deserialize(v1);
+		const reserialized = serialize(rebuilt.scene, rebuilt.timeline);
+		expect(reserialized.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+		expect(reserialized.timeline).toEqual(v2.timeline);
+	});
+
+	test("timeline with audio tracks roundtrips", () => {
+		const scene = buildFixtureScene();
+		const timeline = createTimeline({
+			tracks: [
+				createAudioTrack({
+					id: "aud-1",
+					gain: 0.8,
+					muted: false,
+					clips: [
+						createAudioClip({
+							id: "aclip-1",
+							src: "assets/voice.mp3",
+							start: 1,
+							end: 4,
+							offset: 0.25,
+							gain: 0.9,
+							muted: false,
+						}),
+					],
+				}),
+			],
+		});
+		const first = serialize(scene, timeline);
+		expect(first.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+		const rebuilt = deserialize(first);
+		expect(rebuilt.timeline.tracks).toHaveLength(1);
+		const track = rebuilt.timeline.tracks[0];
+		if (!track || !isAudioTrack(track)) throw new Error("expected audio track");
+		expect(track.gain).toBe(0.8);
+		expect(track.clips[0]?.src).toBe("assets/voice.mp3");
+		expect(track.clips[0]?.offset).toBe(0.25);
+		const second = serialize(rebuilt.scene, rebuilt.timeline);
+		expect(second).toEqual(first);
+	});
+
+	test("audio clip payloads validate required fields", () => {
+		const base = serialize(buildFixtureScene());
+		expect(() =>
+			deserialize({
+				...base,
+				timeline: {
+					tracks: [
+						{
+							id: "aud-bad",
+							kind: "audio",
+							gain: 1,
+							muted: false,
+							clips: [{ id: "c", src: "a.mp3", start: 0, end: 1, gain: 1, muted: false }],
+						},
+					],
+				},
+			}),
+		).toThrow();
 	});
 
 	test("invalid content-node payload (rect color missing a component) throws", () => {

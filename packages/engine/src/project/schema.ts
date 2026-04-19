@@ -1,5 +1,6 @@
 import {
 	array,
+	boolean,
 	type GenericSchema,
 	type InferOutput,
 	lazy,
@@ -17,7 +18,7 @@ import { TransformKind } from "../scene/transform.ts";
 import { EasingName } from "../timeline/easing.ts";
 import { TrackKind } from "../timeline/types.ts";
 
-export const CURRENT_SCHEMA_VERSION = 1 as const;
+export const CURRENT_SCHEMA_VERSION = 2 as const;
 
 export const Vec3Schema = tuple([number(), number(), number()]);
 
@@ -147,7 +148,25 @@ export const NumberTrackSchema = object({
 	clips: array(NumberClipSchema),
 });
 
-export const TrackSchema = variant("kind", [NumberTrackSchema]);
+export const AudioClipSchema = object({
+	id: string(),
+	src: string(),
+	start: number(),
+	end: number(),
+	offset: number(),
+	gain: number(),
+	muted: boolean(),
+});
+
+export const AudioTrackSchema = object({
+	id: string(),
+	kind: literal(TrackKind.Audio),
+	clips: array(AudioClipSchema),
+	gain: number(),
+	muted: boolean(),
+});
+
+export const TrackSchema = variant("kind", [NumberTrackSchema, AudioTrackSchema]);
 
 export const TimelineSchema = object({
 	tracks: array(TrackSchema),
@@ -170,6 +189,8 @@ export type SceneJSON = InferOutput<typeof SceneSchema>;
 export type NumberKeyframeJSON = InferOutput<typeof NumberKeyframeSchema>;
 export type NumberClipJSON = InferOutput<typeof NumberClipSchema>;
 export type NumberTrackJSON = InferOutput<typeof NumberTrackSchema>;
+export type AudioClipJSON = InferOutput<typeof AudioClipSchema>;
+export type AudioTrackJSON = InferOutput<typeof AudioTrackSchema>;
 export type TrackJSON = InferOutput<typeof TrackSchema>;
 export type TrackTargetByIdJSON = InferOutput<typeof TrackTargetByIdSchema>;
 export type TrackTargetByPathJSON = InferOutput<typeof TrackTargetByPathSchema>;

@@ -6,6 +6,8 @@ export {
 } from "./deserialize.ts";
 export { migrate, UnknownSchemaVersionError } from "./migrations.ts";
 export {
+	type AudioClipJSON,
+	type AudioTrackJSON,
 	type BoxJSON,
 	CURRENT_SCHEMA_VERSION,
 	type GroupJSON,

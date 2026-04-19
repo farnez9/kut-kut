@@ -5,10 +5,12 @@ export type PlaybackState = "playing" | "paused";
 export type PlaybackController = {
 	time: Accessor<number>;
 	state: Accessor<PlaybackState>;
+	seekToken: Accessor<number>;
 	play: () => void;
 	pause: () => void;
 	seek: (t: number) => void;
 	restart: () => void;
+	onTransition: (fn: () => void) => () => void;
 	dispose: () => void;
 };
 
@@ -39,10 +41,16 @@ export const createPlaybackController = (
 
 	const [time, setTime] = createSignal(0);
 	const [state, setState] = createSignal<PlaybackState>("paused");
+	const [seekToken, setSeekToken] = createSignal(0);
 
 	let anchorWall = 0;
 	let anchorTime = 0;
 	let frame: { cancel: () => void } | null = null;
+	const listeners = new Set<() => void>();
+
+	const notify = () => {
+		for (const fn of listeners) fn();
+	};
 
 	const cancelFrame = () => {
 		if (frame) {
@@ -71,6 +79,7 @@ export const createPlaybackController = (
 			}
 			setTime(duration);
 			setState("paused");
+			notify();
 			return;
 		}
 		setTime(clamp(raw, 0, duration));
@@ -88,18 +97,22 @@ export const createPlaybackController = (
 		anchor(time());
 		setState("playing");
 		scheduleNext();
+		notify();
 	};
 
 	const pause = () => {
 		if (state() === "paused") return;
 		cancelFrame();
 		setState("paused");
+		notify();
 	};
 
 	const seek = (t: number) => {
 		const clamped = clamp(t, 0, duration);
 		setTime(clamped);
 		if (state() === "playing") anchor(clamped);
+		setSeekToken((v) => v + 1);
+		notify();
 	};
 
 	const restart = () => {
@@ -107,13 +120,23 @@ export const createPlaybackController = (
 		setTime(0);
 		anchor(0);
 		setState("playing");
+		setSeekToken((v) => v + 1);
 		scheduleNext();
+		notify();
+	};
+
+	const onTransition = (fn: () => void): (() => void) => {
+		listeners.add(fn);
+		return () => {
+			listeners.delete(fn);
+		};
 	};
 
 	const dispose = () => {
 		cancelFrame();
 		setState("paused");
+		listeners.clear();
 	};
 
-	return { time, state, play, pause, seek, restart, dispose };
+	return { time, state, seekToken, play, pause, seek, restart, onTransition, dispose };
 };

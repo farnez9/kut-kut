@@ -1,4 +1,4 @@
-import type { Clip, Timeline, Track } from "@kut-kut/engine";
+import { type Clip, isNumberTrack, type Timeline } from "@kut-kut/engine";
 import { createStore, produce, type Store } from "solid-js/store";
 
 export type Mutator = (fn: (draft: Timeline) => void) => void;
@@ -21,8 +21,8 @@ const findClipInDraft = (
 	trackId: string,
 	clipId: string,
 ): Clip<number> | undefined => {
-	const track: Track | undefined = draft.tracks.find((t) => t.id === trackId);
-	if (!track) return undefined;
+	const track = draft.tracks.find((t) => t.id === trackId);
+	if (!track || !isNumberTrack(track)) return undefined;
 	return track.clips.find((c) => c.id === clipId);
 };
 

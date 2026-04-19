@@ -1,5 +1,5 @@
 import { easings } from "./easing.ts";
-import type { Clip, Track } from "./types.ts";
+import type { Clip, NumberTrack } from "./types.ts";
 
 export const evaluateClip = (clip: Clip<number>, timeInClip: number): number | undefined => {
 	const { keyframes } = clip;
@@ -23,7 +23,7 @@ export const evaluateClip = (clip: Clip<number>, timeInClip: number): number | u
 	}
 };
 
-export const evaluateTrack = (track: Track, sceneTime: number): number | undefined => {
+export const evaluateTrack = (track: NumberTrack, sceneTime: number): number | undefined => {
 	for (const clip of track.clips) {
 		if (sceneTime < clip.start || sceneTime > clip.end) continue;
 		const value = evaluateClip(clip, sceneTime - clip.start);

@@ -7,9 +7,16 @@ export class UnknownSchemaVersionError extends Error {
 	}
 }
 
+const migrateV1ToV2 = (input: Record<string, unknown>): Record<string, unknown> => ({
+	...input,
+	schemaVersion: 2,
+});
+
 export const migrate = (input: unknown): unknown => {
 	if (input === null || typeof input !== "object") return input;
-	const version = (input as { schemaVersion?: unknown }).schemaVersion;
-	if (version === CURRENT_SCHEMA_VERSION) return input;
+	const record = input as Record<string, unknown>;
+	const version = record.schemaVersion;
+	if (version === CURRENT_SCHEMA_VERSION) return record;
+	if (version === 1) return migrateV1ToV2(record);
 	throw new UnknownSchemaVersionError(version);
 };

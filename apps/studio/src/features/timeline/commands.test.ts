@@ -1,10 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import {
+	type Clip,
 	createClip,
 	createKeyframe,
 	createTimeline,
 	createTrack,
 	EasingName,
+	isNumberTrack,
 	type Keyframe,
 	type Timeline,
 } from "@kut-kut/engine";
@@ -47,6 +49,12 @@ const mutatorFor =
 
 const snapshot = (tl: Timeline): string => JSON.stringify(tl);
 
+const firstNumberClip = (tl: Timeline): Clip<number> | undefined => {
+	const track = tl.tracks[0];
+	if (!track || !isNumberTrack(track)) return undefined;
+	return track.clips[0];
+};
+
 const runRoundTrip = (tl: Timeline, cmd: Command): void => {
 	const before = snapshot(tl);
 	cmd.apply();
@@ -80,7 +88,7 @@ describe("resizeClipLeftCommand", () => {
 		const tl = buildTimeline();
 		const cmd = resizeClipLeftCommand(mutatorFor(tl), "trk-x", "clp-a", 1, 1.75);
 		cmd.apply();
-		const clip = tl.tracks[0]?.clips[0];
+		const clip = firstNumberClip(tl);
 		expect(clip?.start).toBe(1.75);
 		expect(clip?.keyframes.map((k) => k.time)).toEqual([-0.75, 0.25, 1.75]);
 		cmd.invert();
@@ -112,7 +120,7 @@ describe("moveKeyframeCommand", () => {
 		const cmd = moveKeyframeCommand(mutatorFor(tl), "trk-x", "clp-a", 1, 1, -0.5);
 		const before = snapshot(tl);
 		cmd.apply();
-		const kf0 = tl.tracks[0]?.clips[0]?.keyframes[0];
+		const kf0 = firstNumberClip(tl)?.keyframes[0];
 		expect(kf0?.value).toBe(5);
 		expect(kf0?.time).toBe(-0.5);
 		cmd.invert();
@@ -124,7 +132,7 @@ describe("moveKeyframeCommand", () => {
 		const cmd = moveKeyframeCommand(mutatorFor(tl), "trk-x", "clp-a", 0, 0, 3);
 		const before = snapshot(tl);
 		cmd.apply();
-		const last = tl.tracks[0]?.clips[0]?.keyframes[2];
+		const last = firstNumberClip(tl)?.keyframes[2];
 		expect(last?.value).toBe(0);
 		expect(last?.time).toBe(3);
 		cmd.invert();
@@ -146,7 +154,7 @@ describe("upsertKeyframeCommand", () => {
 		);
 		const before = snapshot(tl);
 		cmd.apply();
-		const clip = tl.tracks[0]?.clips[0];
+		const clip = firstNumberClip(tl);
 		expect(clip?.keyframes.length).toBe(4);
 		expect(clip?.keyframes.map((k) => k.time)).toEqual([0, 1, 1.5, 2.5]);
 		expect(clip?.keyframes[2]?.value).toBe(7);
@@ -168,7 +176,7 @@ describe("upsertKeyframeCommand", () => {
 		);
 		const before = snapshot(tl);
 		cmd.apply();
-		const clip = tl.tracks[0]?.clips[0];
+		const clip = firstNumberClip(tl);
 		expect(clip?.keyframes.length).toBe(3);
 		expect(clip?.keyframes[1]?.value).toBe(99);
 		cmd.invert();

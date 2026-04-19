@@ -9,7 +9,8 @@ import type { Rect } from "../scene/rect.ts";
 import type { Scene } from "../scene/scene.ts";
 import { type Transform2D, type Transform3D, TransformKind } from "../scene/transform.ts";
 import { assertSceneStructure } from "../scene/validate.ts";
-import type { Timeline } from "../timeline/types.ts";
+import type { Timeline, Track } from "../timeline/types.ts";
+import { TrackKind } from "../timeline/types.ts";
 import { migrate } from "./migrations.ts";
 import type {
 	BoxJSON,
@@ -19,6 +20,7 @@ import type {
 	RectJSON,
 	SceneJSON,
 	TimelineJSON,
+	TrackJSON,
 	Transform2DJSON,
 	Transform3DJSON,
 } from "./schema.ts";
@@ -106,8 +108,25 @@ const rehydrateScene = (s: SceneJSON): Scene => ({
 	layers: s.layers.map(rehydrateLayer),
 });
 
-const rehydrateTimeline = (t: TimelineJSON): Timeline => ({
-	tracks: t.tracks.map((track) => ({
+const rehydrateTrack = (track: TrackJSON): Track => {
+	if (track.kind === TrackKind.Audio) {
+		return {
+			id: track.id,
+			kind: track.kind,
+			gain: track.gain,
+			muted: track.muted,
+			clips: track.clips.map((clip) => ({
+				id: clip.id,
+				src: clip.src,
+				start: clip.start,
+				end: clip.end,
+				offset: clip.offset,
+				gain: clip.gain,
+				muted: clip.muted,
+			})),
+		};
+	}
+	return {
 		id: track.id,
 		kind: track.kind,
 		target: { ...track.target },
@@ -117,7 +136,11 @@ const rehydrateTimeline = (t: TimelineJSON): Timeline => ({
 			end: clip.end,
 			keyframes: clip.keyframes.map((k) => ({ time: k.time, value: k.value, easing: k.easing })),
 		})),
-	})),
+	};
+};
+
+const rehydrateTimeline = (t: TimelineJSON): Timeline => ({
+	tracks: t.tracks.map(rehydrateTrack),
 });
 
 export type Project = {
