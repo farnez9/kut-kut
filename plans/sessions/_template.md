@@ -1,9 +1,9 @@
 # Session NN — <slug>
 
-**Estimated:** ~2h focused  
-**Depends on:** <prior sessions or prerequisites>  
-**Status:** draft | in-progress | done  
-**Links:** <ADRs, issues, relevant files>
+**Estimated:** ~2h focused
+**Depends on:** <prior sessions or prerequisites>
+**Status:** draft | in-progress | done
+**Links:** <ADRs, feature CLAUDE.md files, relevant files>
 
 ## Goal
 
@@ -11,7 +11,12 @@ One short paragraph. What state does the codebase reach at the end of this sessi
 
 ## Design
 
-Key decisions for this session. Data shapes, interfaces, file layout, naming. Enough detail that the session could be picked up cold and started in 5 minutes. Link ADRs where relevant. If the session introduces a new architectural decision, write the ADR alongside this spec.
+**Thin by design.** Name the shape of the change and link to rationale — don't re-argue the rationale here.
+
+- New types / file layout / interfaces: 1–2 lines each, or a tiny code block.
+- Non-trivial *why*: write an ADR in `plans/decisions/NNNN-*.md` and link it. If the rationale fits in one sentence, inline it; otherwise, ADR.
+
+If this section runs past ~60 lines, the rationale belongs in an ADR.
 
 ## Tasks
 
@@ -23,17 +28,17 @@ Ordered. Each task ≈ 15–45 min. Note inline dependencies (e.g., "blocks #4")
 
 ## Non-goals
 
-Explicit list of things we are **not** doing this session, even though they're adjacent. This is the anti-scope-creep section — fill it deliberately.
+Explicit list of things we are **not** doing this session, even though they're adjacent.
 
 ## Verification
 
-Concrete ways we know this session succeeded. Commands to run, tests to pass, manual checks, visual smoke.
+Concrete ways we know this session succeeded. Commands to run, tests to pass, manual checks.
 
 ## Outcome
 
-_Filled at session end._
+_Filled at session end. Keep tight — bullets, not prose._
 
-- **Shipped:** what actually landed.
-- **Deferred:** what moved to a later session, and why.
-- **Surprises:** unexpected discoveries, good or bad.
+- **Shipped:** what landed (one line per deliverable).
+- **Deferred:** what moved + one-line reason.
+- **Surprises:** only non-obvious ones that a future session needs to know. Skip "typecheck caught X".
 - **Follow-ups:** new tasks/ADRs/questions that came out of the work.
