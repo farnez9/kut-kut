@@ -11,12 +11,10 @@ One short paragraph. What state does the codebase reach at the end of this sessi
 
 ## Design
 
-**Thin by design.** Name the shape of the change and link to rationale — don't re-argue the rationale here.
+**Thin by design.** Name the shape of the change — don't re-argue rationale here. If the *why* needs more than one sentence, write an ADR in `plans/decisions/` and link it.
 
 - New types / file layout / interfaces: 1–2 lines each, or a tiny code block.
-- Non-trivial *why*: write an ADR in `plans/decisions/NNNN-*.md` and link it. If the rationale fits in one sentence, inline it; otherwise, ADR.
-
-If this section runs past ~60 lines, the rationale belongs in an ADR.
+- If this section runs past ~60 lines, the rationale belongs in an ADR.
 
 ## Tasks
 
@@ -32,13 +30,8 @@ Explicit list of things we are **not** doing this session, even though they're a
 
 ## Verification
 
-Concrete ways we know this session succeeded. Commands to run, tests to pass, manual checks.
+Concrete ways we know the session succeeded. Commands to run, tests to pass, manual checks. Tests go through the `test-runner` sub-agent.
 
-## Outcome
+---
 
-_Filled at session end. Keep tight — bullets, not prose._
-
-- **Shipped:** what landed (one line per deliverable).
-- **Deferred:** what moved + one-line reason.
-- **Surprises:** only non-obvious ones that a future session needs to know. Skip "typecheck caught X".
-- **Follow-ups:** new tasks/ADRs/questions that came out of the work.
+At wrap-up, append one line summarising what shipped to `plans/overview.md`'s **Progress log** and update the **Current state** paragraph. Do not add an Outcome section here.
