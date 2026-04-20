@@ -10,7 +10,10 @@ export type AudioPlayerOptions = {
 	playback: PlaybackController;
 };
 
-export type AudioPlayer = { dispose: () => void };
+export type AudioPlayer = {
+	dispose: () => void;
+	reconcile: () => void;
+};
 
 type ActiveSource = { source: AudioBufferSourceNode; clipGain: GainNode };
 
@@ -112,5 +115,5 @@ export const createAudioPlayer = (opts: AudioPlayerOptions): AudioPlayer => {
 		trackGain.clear();
 	};
 
-	return { dispose };
+	return { dispose, reconcile };
 };

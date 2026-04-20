@@ -2,7 +2,7 @@
 
 **Estimated:** ~2h focused
 **Depends on:** Session 06 (Vite project-fs plugin + project loader), Session 08 (command store), Session 12 (engine audio core)
-**Status:** draft
+**Status:** done
 **Links:** `plans/decisions/0009-audio-model.md`, `plans/decisions/0010-studio-audio-wiring.md` (this session), `packages/engine/CLAUDE.md`, `apps/studio/CLAUDE.md`, `apps/studio/src/features/timeline/CLAUDE.md`
 
 ## Goal

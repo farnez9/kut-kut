@@ -1,4 +1,4 @@
-import type { Timeline } from "@kut-kut/engine";
+import type { AudioTrack, Timeline } from "@kut-kut/engine";
 import { type Accessor, createContext, useContext } from "solid-js";
 import type { SetStoreFunction, Store } from "solid-js/store";
 import type { Command } from "../../lib/commands/index.ts";
@@ -41,6 +41,10 @@ export type TimelineContextValue = {
 	resizeClipRight: (trackId: string, clipId: string, newEnd: number) => void;
 	setKeyframeTime: (trackId: string, clipId: string, index: number, newTime: number) => void;
 	sortClipKeyframes: (trackId: string, clipId: string) => void;
+	addAudioTrack: (track: AudioTrack) => void;
+	removeAudioTrack: (trackId: string) => void;
+	setAudioTrackGain: (trackId: string, next: number) => void;
+	setAudioTrackMuted: (trackId: string, next: boolean) => void;
 	push: (cmd: Command) => void;
 	undo: () => void;
 	redo: () => void;

@@ -1168,3 +1168,104 @@ button:focus-visible {
 	background: var(--ink-3);
 	color: var(--hot);
 }
+
+/* ───── audio track row ───── */
+
+.tl-track-row--audio {
+	height: 52px;
+}
+
+.tl-audio-label {
+	gap: 6px;
+	overflow: visible;
+}
+
+.tl-audio-label__title {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tl-audio-mute {
+	width: 22px;
+	height: 22px;
+	border-radius: 3px;
+	border: 1px solid var(--rule);
+	background: var(--ink-0);
+	color: var(--paper-dim);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	flex: 0 0 auto;
+}
+
+.tl-audio-mute--on {
+	background: var(--rec, #d94a4a);
+	color: var(--paper);
+	border-color: var(--rec, #d94a4a);
+}
+
+.tl-audio-gain {
+	width: 64px;
+	accent-color: var(--hot);
+}
+
+.tl-audio-clip {
+	position: absolute;
+	top: 6px;
+	bottom: 6px;
+	left: 0;
+	background: rgba(100, 216, 203, 0.12);
+	border: 1px solid rgba(100, 216, 203, 0.35);
+	border-radius: 2px;
+	cursor: pointer;
+	overflow: hidden;
+}
+
+.tl-audio-clip:hover {
+	border-color: var(--hot);
+}
+
+.tl-audio-clip--selected {
+	border-color: var(--hot);
+	box-shadow: 0 0 0 1px var(--hot-soft);
+}
+
+.tl-audio-clip__canvas {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+/* ───── timeline header actions ───── */
+
+.app-timeline__actions {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.tl-import-btn {
+	padding: 2px 8px;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	background: var(--ink-0);
+	color: var(--paper-dim);
+	border: 1px solid var(--rule);
+	border-radius: 2px;
+	cursor: pointer;
+}
+
+.tl-import-btn:hover:not(:disabled) {
+	color: var(--hot);
+	border-color: var(--hot);
+}
+
+.tl-import-btn:disabled {
+	opacity: 0.6;
+	cursor: default;
+}

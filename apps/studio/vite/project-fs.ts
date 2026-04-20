@@ -120,7 +120,7 @@ const readProjectHandler = async (
 			if (!entry.isFile()) continue;
 			if (entry.name.startsWith(".")) continue;
 			const stat = await fs.stat(path.join(assetsDir, entry.name));
-			assets.push({ path: entry.name, size: stat.size });
+			assets.push({ path: `assets/${entry.name}`, size: stat.size });
 		}
 		assets.sort((a, b) => a.path.localeCompare(b.path));
 	} catch (err) {
@@ -225,7 +225,7 @@ const uploadAssetHandler = async (
 	await fs.mkdir(assetsDir, { recursive: true });
 
 	const busboy = Busboy({ headers: req.headers });
-	let wrote = false;
+	let sawFile = false;
 	let responded = false;
 	const respond = (status: number, body: unknown): void => {
 		if (responded) return;
@@ -239,6 +239,7 @@ const uploadAssetHandler = async (
 				stream.resume();
 				return;
 			}
+			sawFile = true;
 			const basename = path.basename(info.filename ?? "");
 			if (!basename || !ASSET_NAME_RE.test(basename)) {
 				stream.resume();
@@ -257,10 +258,9 @@ const uploadAssetHandler = async (
 			const write = createWriteStream(targetAbs);
 			stream.pipe(write);
 			write.on("finish", async () => {
-				wrote = true;
 				try {
 					const stat = await fs.stat(targetAbs);
-					respond(200, { path: basename, size: stat.size });
+					respond(200, { path: `assets/${basename}`, size: stat.size });
 				} catch (err) {
 					respond(500, { error: "failed to stat asset", detail: (err as Error).message });
 				}
@@ -276,7 +276,7 @@ const uploadAssetHandler = async (
 			resolve();
 		});
 		busboy.on("close", () => {
-			if (!wrote) {
+			if (!sawFile) {
 				respond(400, { error: "no file field in body" });
 				resolve();
 			}

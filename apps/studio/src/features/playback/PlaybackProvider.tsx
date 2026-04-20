@@ -24,6 +24,7 @@ export const PlaybackProvider = (props: PlaybackProviderProps): JSX.Element => {
 		},
 		restart: controller.restart,
 		seek: controller.seek,
+		controller,
 	};
 
 	return <PlaybackContext.Provider value={value}>{props.children}</PlaybackContext.Provider>;

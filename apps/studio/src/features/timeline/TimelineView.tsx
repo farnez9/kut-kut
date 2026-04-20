@@ -1,12 +1,14 @@
-import { isNumberTrack } from "@kut-kut/engine";
+import { isAudioTrack, isNumberTrack, type Track } from "@kut-kut/engine";
 import type { JSX } from "solid-js";
-import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js";
+import { createEffect, createSignal, For, onCleanup, onMount, Show } from "solid-js";
+import { useAudio } from "../audio/context.ts";
 import { usePlayback } from "../playback/index.ts";
+import { AudioTrackRow } from "./AudioTrackRow.tsx";
 import { useTimeline } from "./context.ts";
 import { LABEL_WIDTH } from "./layout.ts";
 import { pxToTime, timeToPx } from "./mapping.ts";
+import { NumberTrackRow } from "./NumberTrackRow.tsx";
 import { Ruler } from "./Ruler.tsx";
-import { TrackRow } from "./TrackRow.tsx";
 
 const MIN_ZOOM = 40;
 const MAX_ZOOM = 400;
@@ -87,7 +89,7 @@ export const TimelineView = (): JSX.Element => {
 		t.selectClip(null);
 	};
 
-	const numberTracks = createMemo(() => t.timeline.tracks.filter(isNumberTrack));
+	const tracks = (): readonly Track[] => t.timeline.tracks;
 
 	return (
 		<div class="tl-strip" ref={container} onWheel={onWheel}>
@@ -95,17 +97,72 @@ export const TimelineView = (): JSX.Element => {
 			<Ruler laneWidth={laneWidth} />
 			<div class="tl-body" onPointerDown={onBodyPointerDown}>
 				<Show
-					when={numberTracks().length > 0}
+					when={tracks().length > 0}
 					fallback={
 						<div class="tl-body__empty">
-							<span class="label">No tracks yet — add one in session 08.</span>
+							<span class="label">No tracks yet — import audio or add one from scene code.</span>
 						</div>
 					}
 				>
-					<For each={numberTracks()}>{(track) => <TrackRow track={track} />}</For>
+					<For each={tracks()}>{(track) => <TrackRouter track={track} />}</For>
 				</Show>
 			</div>
 			<Playhead laneWidth={laneWidth} />
 		</div>
+	);
+};
+
+const TrackRouter = (props: { track: Track }): JSX.Element => {
+	const track = props.track;
+	if (isAudioTrack(track)) return <AudioTrackRow track={track} />;
+	if (isNumberTrack(track)) return <NumberTrackRow track={track} />;
+	return null;
+};
+
+export const TimelineImportButton = (): JSX.Element => {
+	const audio = useAudio();
+	let input!: HTMLInputElement;
+
+	const onChange = async (): Promise<void> => {
+		const file = input.files?.[0];
+		input.value = "";
+		if (!file) return;
+		try {
+			await audio.importFile(file);
+		} catch (err) {
+			console.error("[audio] import failed", err);
+		}
+	};
+
+	return (
+		<>
+			<input
+				ref={input}
+				type="file"
+				accept="audio/*"
+				style={{ display: "none" }}
+				onChange={onChange}
+			/>
+			<button
+				type="button"
+				class="tl-import-btn"
+				onClick={() => input.click()}
+				disabled={audio.importState() === "importing"}
+				title="Import audio file"
+			>
+				{audio.importState() === "importing" ? "Importing…" : "Import audio"}
+			</button>
+		</>
+	);
+};
+
+export const TimelineImportError = (): JSX.Element => {
+	const audio = useAudio();
+	return (
+		<Show when={audio.importState() === "error" && audio.importError()}>
+			<div class="tl-save-banner" role="status">
+				Audio import failed — {audio.importError()?.message ?? "unknown error"}
+			</div>
+		</Show>
 	);
 };

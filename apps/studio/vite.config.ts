@@ -13,5 +13,16 @@ export default defineConfig({
 			"@kut-kut/engine": path.join(enginePkg, "src/index.ts"),
 		},
 	},
+	assetsInclude: [
+		"**/*.mp3",
+		"**/*.wav",
+		"**/*.ogg",
+		"**/*.oga",
+		"**/*.opus",
+		"**/*.m4a",
+		"**/*.aac",
+		"**/*.flac",
+		"**/*.webm",
+	],
 	plugins: [solid(), projectFsPlugin()],
 });

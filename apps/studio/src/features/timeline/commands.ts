@@ -1,4 +1,10 @@
-import { isNumberTrack, type Keyframe, type Timeline } from "@kut-kut/engine";
+import {
+	type AudioTrack,
+	isAudioTrack,
+	isNumberTrack,
+	type Keyframe,
+	type Timeline,
+} from "@kut-kut/engine";
 import type { Command } from "../../lib/commands/index.ts";
 import type { Mutator } from "./store.ts";
 
@@ -118,6 +124,86 @@ export const moveKeyframeCommand = (
 	};
 
 	return { label: "Move keyframe", apply, invert };
+};
+
+export const addAudioTrackCommand = (mutate: Mutator, track: AudioTrack): Command => {
+	const snapshot: AudioTrack = { ...track, clips: track.clips.map((c) => ({ ...c })) };
+	const apply = (): void => {
+		mutate((draft) => {
+			if (draft.tracks.some((t) => t.id === snapshot.id)) return;
+			draft.tracks.push({ ...snapshot, clips: snapshot.clips.map((c) => ({ ...c })) });
+		});
+	};
+	const invert = (): void => {
+		mutate((draft) => {
+			const idx = draft.tracks.findIndex((t) => t.id === snapshot.id);
+			if (idx < 0) return;
+			draft.tracks.splice(idx, 1);
+		});
+	};
+	return { label: "Add audio track", apply, invert };
+};
+
+export const removeAudioTrackCommand = (
+	mutate: Mutator,
+	trackId: string,
+	captured: AudioTrack,
+): Command => {
+	const snapshot: AudioTrack = { ...captured, clips: captured.clips.map((c) => ({ ...c })) };
+	const apply = (): void => {
+		mutate((draft) => {
+			const idx = draft.tracks.findIndex((t) => t.id === trackId);
+			if (idx < 0) return;
+			draft.tracks.splice(idx, 1);
+		});
+	};
+	const invert = (): void => {
+		mutate((draft) => {
+			if (draft.tracks.some((t) => t.id === trackId)) return;
+			draft.tracks.push({ ...snapshot, clips: snapshot.clips.map((c) => ({ ...c })) });
+		});
+	};
+	return { label: "Remove audio track", apply, invert };
+};
+
+export const setAudioTrackGainCommand = (
+	mutate: Mutator,
+	trackId: string,
+	prev: number,
+	next: number,
+): Command => {
+	const set = (value: number): void => {
+		mutate((draft) => {
+			const track = draft.tracks.find((t) => t.id === trackId);
+			if (!track || !isAudioTrack(track)) return;
+			track.gain = value;
+		});
+	};
+	return {
+		label: "Set audio gain",
+		apply: () => set(next),
+		invert: () => set(prev),
+	};
+};
+
+export const setAudioTrackMutedCommand = (
+	mutate: Mutator,
+	trackId: string,
+	prev: boolean,
+	next: boolean,
+): Command => {
+	const set = (value: boolean): void => {
+		mutate((draft) => {
+			const track = draft.tracks.find((t) => t.id === trackId);
+			if (!track || !isAudioTrack(track)) return;
+			track.muted = value;
+		});
+	};
+	return {
+		label: next ? "Mute audio track" : "Unmute audio track",
+		apply: () => set(next),
+		invert: () => set(prev),
+	};
 };
 
 export const upsertKeyframeCommand = (

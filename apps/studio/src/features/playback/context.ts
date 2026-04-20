@@ -1,4 +1,4 @@
-import type { PlaybackState } from "@kut-kut/engine";
+import type { PlaybackController, PlaybackState } from "@kut-kut/engine";
 import { type Accessor, createContext, useContext } from "solid-js";
 
 export type PlaybackContextValue = {
@@ -10,6 +10,7 @@ export type PlaybackContextValue = {
 	toggle: () => void;
 	restart: () => void;
 	seek: (t: number) => void;
+	controller: PlaybackController;
 };
 
 export const PlaybackContext = createContext<PlaybackContextValue>();

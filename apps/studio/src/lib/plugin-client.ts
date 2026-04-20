@@ -13,7 +13,11 @@ export class PluginError extends Error {
 	readonly status: number;
 	readonly body: unknown;
 	constructor(status: number, body: unknown) {
-		super(`plugin responded ${status}`);
+		const detail =
+			body && typeof body === "object" && "error" in body
+				? ` — ${(body as { error: unknown }).error}`
+				: "";
+		super(`plugin responded ${status}${detail}`);
 		this.status = status;
 		this.body = body;
 	}
@@ -52,9 +56,15 @@ export const writeOverlay = async (name: string, overlay: OverlayJSON): Promise<
 	});
 };
 
+const sanitizeAssetFilename = (raw: string): string => {
+	const base = raw.replace(/^.*[\\/]/, "");
+	const cleaned = base.replace(/[^A-Za-z0-9._-]+/g, "_").replace(/^_+|_+$/g, "");
+	return cleaned.length > 0 ? cleaned : "asset";
+};
+
 export const uploadAsset = async (name: string, file: File): Promise<AssetRef> => {
 	const form = new FormData();
-	form.append("file", file, file.name);
+	form.append("file", file, sanitizeAssetFilename(file.name));
 	return (await request(`/__kk/projects/${encodeURIComponent(name)}/assets`, {
 		method: "POST",
 		body: form,

@@ -1,21 +1,29 @@
 import { describe, expect, test } from "bun:test";
 import {
+	type AudioTrack,
 	type Clip,
+	createAudioClip,
+	createAudioTrack,
 	createClip,
 	createKeyframe,
 	createTimeline,
 	createTrack,
 	EasingName,
+	isAudioTrack,
 	isNumberTrack,
 	type Keyframe,
 	type Timeline,
 } from "@kut-kut/engine";
 import type { Command } from "../../lib/commands/index.ts";
 import {
+	addAudioTrackCommand,
 	moveClipCommand,
 	moveKeyframeCommand,
+	removeAudioTrackCommand,
 	resizeClipLeftCommand,
 	resizeClipRightCommand,
+	setAudioTrackGainCommand,
+	setAudioTrackMutedCommand,
 	upsertKeyframeCommand,
 } from "./commands.ts";
 import type { Mutator } from "./store.ts";
@@ -135,6 +143,81 @@ describe("moveKeyframeCommand", () => {
 		const last = firstNumberClip(tl)?.keyframes[2];
 		expect(last?.value).toBe(0);
 		expect(last?.time).toBe(3);
+		cmd.invert();
+		expect(snapshot(tl)).toBe(before);
+	});
+});
+
+const findAudioTrack = (tl: Timeline, id: string): AudioTrack | undefined => {
+	const t = tl.tracks.find((tr) => tr.id === id);
+	return t && isAudioTrack(t) ? t : undefined;
+};
+
+describe("addAudioTrackCommand", () => {
+	test("apply appends, invert removes, roundtrip matches", () => {
+		const tl = buildTimeline();
+		const track = createAudioTrack({
+			id: "aud",
+			clips: [createAudioClip({ id: "aclp", src: "voice.mp3", start: 0, end: 2 })],
+		});
+		const cmd = addAudioTrackCommand(mutatorFor(tl), track);
+		const before = snapshot(tl);
+		cmd.apply();
+		expect(findAudioTrack(tl, "aud")?.clips[0]?.src).toBe("voice.mp3");
+		cmd.invert();
+		expect(snapshot(tl)).toBe(before);
+	});
+
+	test("apply is idempotent when track id already present", () => {
+		const tl = buildTimeline();
+		const track = createAudioTrack({ id: "aud" });
+		const cmd = addAudioTrackCommand(mutatorFor(tl), track);
+		cmd.apply();
+		const after = snapshot(tl);
+		cmd.apply();
+		expect(snapshot(tl)).toBe(after);
+	});
+});
+
+describe("removeAudioTrackCommand", () => {
+	test("apply removes, invert restores the captured track", () => {
+		const tl = buildTimeline();
+		const track = createAudioTrack({
+			id: "aud",
+			gain: 0.7,
+			clips: [createAudioClip({ id: "aclp", src: "voice.mp3", start: 0, end: 2 })],
+		});
+		addAudioTrackCommand(mutatorFor(tl), track).apply();
+		const mid = snapshot(tl);
+		const cmd = removeAudioTrackCommand(mutatorFor(tl), "aud", track);
+		cmd.apply();
+		expect(findAudioTrack(tl, "aud")).toBeUndefined();
+		cmd.invert();
+		expect(snapshot(tl)).toBe(mid);
+	});
+});
+
+describe("setAudioTrackGainCommand", () => {
+	test("apply/invert roundtrip", () => {
+		const tl = buildTimeline();
+		addAudioTrackCommand(mutatorFor(tl), createAudioTrack({ id: "aud", gain: 1 })).apply();
+		const before = snapshot(tl);
+		const cmd = setAudioTrackGainCommand(mutatorFor(tl), "aud", 1, 0.5);
+		cmd.apply();
+		expect(findAudioTrack(tl, "aud")?.gain).toBe(0.5);
+		cmd.invert();
+		expect(snapshot(tl)).toBe(before);
+	});
+});
+
+describe("setAudioTrackMutedCommand", () => {
+	test("apply/invert roundtrip", () => {
+		const tl = buildTimeline();
+		addAudioTrackCommand(mutatorFor(tl), createAudioTrack({ id: "aud" })).apply();
+		const before = snapshot(tl);
+		const cmd = setAudioTrackMutedCommand(mutatorFor(tl), "aud", false, true);
+		cmd.apply();
+		expect(findAudioTrack(tl, "aud")?.muted).toBe(true);
 		cmd.invert();
 		expect(snapshot(tl)).toBe(before);
 	});

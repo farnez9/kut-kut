@@ -1,6 +1,7 @@
 import { ChevronDown } from "lucide-solid";
 import type { JSX } from "solid-js";
 import { createEffect, createSignal, on, Show, useContext } from "solid-js";
+import { AudioPlayerHost, AudioProvider } from "./features/audio/index.ts";
 import { Inspector, InspectorHint } from "./features/inspector/index.ts";
 import { LayersPanel } from "./features/layers/index.ts";
 import { OverlayProvider, useOverlay } from "./features/overlay/index.ts";
@@ -19,7 +20,13 @@ import {
 } from "./features/project/index.ts";
 import { RecordProvider, RecordToggle } from "./features/record/index.ts";
 import { TimelineContext } from "./features/timeline/context.ts";
-import { TimelineProvider, TimelineResizer, TimelineView } from "./features/timeline/index.ts";
+import {
+	TimelineImportButton,
+	TimelineImportError,
+	TimelineProvider,
+	TimelineResizer,
+	TimelineView,
+} from "./features/timeline/index.ts";
 import { CommandProvider } from "./lib/commands/index.ts";
 import { useUndoHotkeys } from "./lib/useUndoHotkeys.ts";
 
@@ -199,6 +206,41 @@ const TimelineBody = (): JSX.Element => {
 	);
 };
 
+const TimelineImportErrorBody = (): JSX.Element => {
+	const ctx = useContext(TimelineContext);
+	return (
+		<Show when={ctx}>
+			<TimelineImportError />
+		</Show>
+	);
+};
+
+const TimelineHeaderActions = (props: {
+	collapsed: boolean;
+	onToggle: () => void;
+}): JSX.Element => {
+	const ctx = useContext(TimelineContext);
+	return (
+		<div class="app-timeline__actions">
+			<Show when={ctx && !props.collapsed}>
+				<TimelineImportButton />
+			</Show>
+			<button
+				type="button"
+				class="app-timeline__toggle"
+				aria-label={props.collapsed ? "Expand timeline" : "Collapse timeline"}
+				aria-expanded={!props.collapsed}
+				title={props.collapsed ? "Expand timeline" : "Collapse timeline"}
+				onClick={props.onToggle}
+			>
+				<span class="app-timeline__chevron" aria-hidden="true">
+					<ChevronDown size={16} strokeWidth={2.25} />
+				</span>
+			</button>
+		</div>
+	);
+};
+
 const InspectorBody = (): JSX.Element => {
 	const ctx = useContext(TimelineContext);
 	return (
@@ -292,20 +334,10 @@ const Shell = (): JSX.Element => {
 				</Show>
 				<div class="panel-head">
 					<span class="label">Timeline</span>
-					<button
-						type="button"
-						class="app-timeline__toggle"
-						aria-label={collapsed() ? "Expand timeline" : "Collapse timeline"}
-						aria-expanded={!collapsed()}
-						title={collapsed() ? "Expand timeline" : "Collapse timeline"}
-						onClick={() => setCollapsed((v) => !v)}
-					>
-						<span class="app-timeline__chevron" aria-hidden="true">
-							<ChevronDown size={16} strokeWidth={2.25} />
-						</span>
-					</button>
+					<TimelineHeaderActions collapsed={collapsed()} onToggle={() => setCollapsed((v) => !v)} />
 				</div>
 				<Show when={!collapsed()}>
+					<TimelineImportErrorBody />
 					<TimelineBody />
 				</Show>
 			</section>
@@ -329,7 +361,10 @@ const Root = (): JSX.Element => {
 									duration={b.scene.meta.duration}
 									timeline={b.timeline}
 								>
-									<Shell />
+									<AudioProvider>
+										<AudioPlayerHost />
+										<Shell />
+									</AudioProvider>
 								</TimelineProvider>
 							</OverlayProvider>
 						</RecordProvider>

@@ -1,4 +1,10 @@
-import { type Clip, isNumberTrack, type Timeline } from "@kut-kut/engine";
+import {
+	type AudioTrack,
+	type Clip,
+	isAudioTrack,
+	isNumberTrack,
+	type Timeline,
+} from "@kut-kut/engine";
 import { createStore, produce, type Store } from "solid-js/store";
 
 export type Mutator = (fn: (draft: Timeline) => void) => void;
@@ -12,6 +18,10 @@ export type TimelineStore = {
 	resizeClipRight: (trackId: string, clipId: string, newEnd: number) => void;
 	setKeyframeTime: (trackId: string, clipId: string, index: number, newTime: number) => void;
 	sortClipKeyframes: (trackId: string, clipId: string) => void;
+	appendAudioTrack: (track: AudioTrack) => void;
+	removeAudioTrackById: (id: string) => void;
+	setAudioTrackGain: (id: string, gain: number) => void;
+	setAudioTrackMuted: (id: string, muted: boolean) => void;
 };
 
 const round = (v: number): number => Math.round(v * 1000) / 1000;
@@ -87,6 +97,37 @@ export const createTimelineStore = (initial: Timeline): TimelineStore => {
 		});
 	};
 
+	const appendAudioTrack = (track: AudioTrack): void => {
+		mutate((draft) => {
+			if (draft.tracks.some((t) => t.id === track.id)) return;
+			draft.tracks.push(track);
+		});
+	};
+
+	const removeAudioTrackById = (id: string): void => {
+		mutate((draft) => {
+			const idx = draft.tracks.findIndex((t) => t.id === id && isAudioTrack(t));
+			if (idx < 0) return;
+			draft.tracks.splice(idx, 1);
+		});
+	};
+
+	const setAudioTrackGain = (id: string, gain: number): void => {
+		mutate((draft) => {
+			const track = draft.tracks.find((t) => t.id === id);
+			if (!track || !isAudioTrack(track)) return;
+			track.gain = gain;
+		});
+	};
+
+	const setAudioTrackMuted = (id: string, muted: boolean): void => {
+		mutate((draft) => {
+			const track = draft.tracks.find((t) => t.id === id);
+			if (!track || !isAudioTrack(track)) return;
+			track.muted = muted;
+		});
+	};
+
 	return {
 		timeline,
 		setTimeline,
@@ -96,5 +137,9 @@ export const createTimelineStore = (initial: Timeline): TimelineStore => {
 		resizeClipRight,
 		setKeyframeTime,
 		sortClipKeyframes,
+		appendAudioTrack,
+		removeAudioTrackById,
+		setAudioTrackGain,
+		setAudioTrackMuted,
 	};
 };

@@ -361,6 +361,45 @@ describe("createAudioPlayer", () => {
 			dispose();
 		}));
 
+	test("reconcile() after a non-transition mute rebuilds the schedule", () =>
+		createRoot((dispose) => {
+			const playback = createPlaybackController({
+				duration: 10,
+				now: h.now,
+				scheduler: h.scheduler,
+			});
+			const [tracks, setTracks] = createSignal<Track[]>([
+				createAudioTrack({
+					id: "T",
+					clips: [createAudioClip({ src: "a.mp3", start: 0, end: 4 })],
+				}),
+			]);
+			const [buffers] = createSignal(new Map([["a.mp3", fakeBuffer("a")]]));
+			const player = createAudioPlayer({
+				context: ctx as unknown as AudioContext,
+				tracks,
+				buffers,
+				playback,
+			});
+			playback.play();
+			expect(ctx.createdSources.length).toBe(1);
+			const firstSource = ctx.createdSources[0];
+
+			const current = tracks()[0];
+			if (current === undefined || current.kind !== "audio") throw new Error("track");
+			setTracks([{ ...current, muted: true }]);
+			player.reconcile();
+
+			expect(firstSource?.stopped.length ?? 0).toBeGreaterThan(0);
+			expect(ctx.createdSources.length).toBe(1);
+			const trackGain = ctx.createdGains[0];
+			expect(trackGain?.gain.value).toBe(0);
+
+			player.dispose();
+			playback.dispose();
+			dispose();
+		}));
+
 	test("applies track gain to the track gain node", () =>
 		createRoot((dispose) => {
 			const playback = createPlaybackController({

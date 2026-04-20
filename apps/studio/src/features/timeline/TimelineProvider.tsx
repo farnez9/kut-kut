@@ -1,7 +1,19 @@
-import { isNumberTrack, isTrackTargetByPath, type Timeline } from "@kut-kut/engine";
+import {
+	type AudioTrack,
+	isAudioTrack,
+	isNumberTrack,
+	isTrackTargetByPath,
+	type Timeline,
+} from "@kut-kut/engine";
 import type { JSX } from "solid-js";
 import { createStore } from "solid-js/store";
 import { useCommands } from "../../lib/commands/index.ts";
+import {
+	addAudioTrackCommand,
+	removeAudioTrackCommand,
+	setAudioTrackGainCommand,
+	setAudioTrackMutedCommand,
+} from "./commands.ts";
 import {
 	makeKeyframeId,
 	TimelineContext,
@@ -40,6 +52,33 @@ export const TimelineProvider = (props: TimelineProviderProps): JSX.Element => {
 		return null;
 	};
 
+	const findAudioTrack = (trackId: string): AudioTrack | null => {
+		const t = store.timeline.tracks.find((tr) => tr.id === trackId);
+		return t && isAudioTrack(t) ? t : null;
+	};
+
+	const addAudioTrack = (track: AudioTrack): void => {
+		commands.push(addAudioTrackCommand(store.mutate, track));
+	};
+
+	const removeAudioTrack = (trackId: string): void => {
+		const track = findAudioTrack(trackId);
+		if (!track) return;
+		commands.push(removeAudioTrackCommand(store.mutate, trackId, track));
+	};
+
+	const setAudioTrackGain = (trackId: string, next: number): void => {
+		const track = findAudioTrack(trackId);
+		if (!track || track.gain === next) return;
+		commands.push(setAudioTrackGainCommand(store.mutate, trackId, track.gain, next));
+	};
+
+	const setAudioTrackMuted = (trackId: string, next: boolean): void => {
+		const track = findAudioTrack(trackId);
+		if (!track || track.muted === next) return;
+		commands.push(setAudioTrackMutedCommand(store.mutate, trackId, track.muted, next));
+	};
+
 	const value: TimelineContextValue = {
 		name: () => props.name,
 		duration: () => props.duration,
@@ -52,6 +91,10 @@ export const TimelineProvider = (props: TimelineProviderProps): JSX.Element => {
 		resizeClipRight: store.resizeClipRight,
 		setKeyframeTime: store.setKeyframeTime,
 		sortClipKeyframes: store.sortClipKeyframes,
+		addAudioTrack,
+		removeAudioTrack,
+		setAudioTrackGain,
+		setAudioTrackMuted,
 		push: commands.push,
 		undo: commands.undo,
 		redo: commands.redo,

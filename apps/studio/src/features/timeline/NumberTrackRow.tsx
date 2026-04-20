@@ -2,7 +2,7 @@ import { isTrackTargetByPath, type NumberTrack } from "@kut-kut/engine";
 import { For, type JSX } from "solid-js";
 import { Clip } from "./Clip.tsx";
 
-export type TrackRowProps = {
+export type NumberTrackRowProps = {
 	track: NumberTrack;
 };
 
@@ -12,7 +12,7 @@ const labelFor = (track: NumberTrack): string => {
 	return `${nodeLabel} · ${target.property}`;
 };
 
-export const TrackRow = (props: TrackRowProps): JSX.Element => {
+export const NumberTrackRow = (props: NumberTrackRowProps): JSX.Element => {
 	return (
 		<div class="tl-track-row" data-track-id={props.track.id}>
 			<div class="tl-track-row__label">{labelFor(props.track)}</div>
