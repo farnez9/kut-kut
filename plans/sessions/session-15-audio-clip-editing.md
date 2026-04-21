@@ -2,7 +2,7 @@
 
 **Estimated:** ~2h focused
 **Depends on:** sessions 08 (command store + number-clip drag/trim), 12 (audio core), 13 (studio audio panel), 14 (voiceover recording)
-**Status:** draft
+**Status:** done
 **Links:**
 - `apps/studio/src/features/timeline/CLAUDE.md`
 - `apps/studio/src/features/audio/CLAUDE.md`
@@ -40,12 +40,12 @@ resizeAudioClipRight(trackId, clipId, newEnd): void    // moves end only
 
 ## Tasks
 
-1. [ ] Add `moveAudioClip`, `resizeAudioClipLeft`, `resizeAudioClipRight` to `TimelineContextValue` and implement in `TimelineProvider`. Unit-level — no UI yet. (≈15 min)
-2. [ ] `commands.ts` — add `moveAudioClipCommand`, `resizeAudioClipLeftCommand`, `resizeAudioClipRightCommand`. Tests round-trip apply + inverse, including `offset` preservation on move and `offset` shift on trim-left. (≈25 min)
-3. [ ] `AudioClipView` in `AudioTrackRow.tsx`: replace the single `onPointerDown` with body + left-handle + right-handle drag handlers using `startPointerDrag`. Compute deltas, call raw setters during drag, build + `push()` a command on `pointerup`. Mirror `Clip.tsx` structure. (≈35 min)
-4. [ ] Waveform peaks slicing in `AudioClipView`: map the canvas x-range to `[offset, offset + (end − start)]` of the full-clip peaks; keep existing fallback when peaks aren't ready. (≈20 min)
-5. [ ] Docs: `features/timeline/CLAUDE.md` — list the three new setters under Mutations; `features/audio/CLAUDE.md` — remove "Clip move / trim for audio clips" from Non-scope and add a short "Trim semantics" note covering offset-compensating trim-left. (≈10 min)
-6. [ ] `test-runner` for `bun test` / `bun run typecheck` / `bun run lint`; `code-reviewer` on the pending diff. (≈15 min)
+1. [x] Add `moveAudioClip`, `resizeAudioClipLeft`, `resizeAudioClipRight` to `TimelineContextValue` and implement in `TimelineProvider`. Unit-level — no UI yet. (≈15 min)
+2. [x] `commands.ts` — add `moveAudioClipCommand`, `resizeAudioClipLeftCommand`, `resizeAudioClipRightCommand`. Tests round-trip apply + inverse, including `offset` preservation on move and `offset` shift on trim-left. (≈25 min)
+3. [x] `AudioClipView` in `AudioTrackRow.tsx`: replace the single `onPointerDown` with body + left-handle + right-handle drag handlers using `startPointerDrag`. Compute deltas, call raw setters during drag, build + `push()` a command on `pointerup`. Mirror `Clip.tsx` structure. (≈35 min)
+4. [x] Waveform peaks slicing in `AudioClipView`: map the canvas x-range to `[offset, offset + (end − start)]` of the full-clip peaks; keep existing fallback when peaks aren't ready. (≈20 min — already present from session 13; verified.)
+5. [x] Docs: `features/timeline/CLAUDE.md` — list the three new setters under Mutations; `features/audio/CLAUDE.md` — remove "Clip move / trim for audio clips" from Non-scope and add a short "Trim semantics" note covering offset-compensating trim-left. (≈10 min)
+6. [x] `test-runner` for `bun test` / `bun run typecheck` / `bun run lint`; `code-reviewer` on the pending diff. (≈15 min)
 
 ## Non-goals
 

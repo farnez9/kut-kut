@@ -2,12 +2,20 @@ import type { AudioClip, AudioTrack, Peaks } from "@kut-kut/engine";
 import { Trash2, Volume2, VolumeX } from "lucide-solid";
 import { createEffect, For, type JSX } from "solid-js";
 import { useAudio } from "../audio/context.ts";
+import {
+	moveAudioClipCommand,
+	resizeAudioClipLeftCommand,
+	resizeAudioClipRightCommand,
+} from "./commands.ts";
 import { useTimeline } from "./context.ts";
+import { startPointerDrag } from "./interaction.ts";
 import { timeToPx } from "./mapping.ts";
 
 export type AudioTrackRowProps = { track: AudioTrack };
 
 const ROW_HEIGHT = 44;
+const CLICK_THRESHOLD_PX = 3;
+const MIN_CLIP_SEC = 0.05;
 
 const basename = (src: string): string => src.split("/").pop() ?? src;
 
@@ -73,19 +81,119 @@ const AudioClipView = (props: { trackId: string; clip: AudioClip }): JSX.Element
 		draw(peaks, buffer?.duration ?? 0);
 	});
 
-	const onPointerDown = (e: PointerEvent): void => {
+	const onBodyPointerDown = (e: PointerEvent): void => {
+		e.preventDefault();
 		e.stopPropagation();
-		t.selectClip(props.clip.id);
+		const clipStart = props.clip.start;
+		const clipDuration = props.clip.end - props.clip.start;
+		const duration = t.duration();
+		let moved = false;
+
+		startPointerDrag(e, {
+			onMove: (dx) => {
+				if (!moved && Math.abs(dx) < CLICK_THRESHOLD_PX) return;
+				moved = true;
+				const deltaSec = dx / t.view.zoom;
+				const nextStart = Math.max(0, Math.min(duration - clipDuration, clipStart + deltaSec));
+				t.moveAudioClip(props.trackId, props.clip.id, nextStart);
+			},
+			onEnd: () => {
+				if (!moved) {
+					t.selectClip(props.clip.id);
+					return;
+				}
+				t.push(
+					moveAudioClipCommand(t.mutate, props.trackId, props.clip.id, clipStart, props.clip.start),
+				);
+			},
+		});
+	};
+
+	const onLeftHandleDown = (e: PointerEvent): void => {
+		e.preventDefault();
+		e.stopPropagation();
+		const clipStart = props.clip.start;
+		const clipEnd = props.clip.end;
+		const clipOffset = props.clip.offset;
+
+		startPointerDrag(e, {
+			onMove: (dx) => {
+				const deltaSec = dx / t.view.zoom;
+				let nextStart = clipStart + deltaSec;
+				nextStart = Math.max(0, nextStart);
+				nextStart = Math.max(clipStart - clipOffset, nextStart);
+				nextStart = Math.min(clipEnd - MIN_CLIP_SEC, nextStart);
+				t.resizeAudioClipLeft(props.trackId, props.clip.id, nextStart);
+			},
+			onEnd: () => {
+				if (props.clip.start === clipStart) return;
+				t.push(
+					resizeAudioClipLeftCommand(
+						t.mutate,
+						props.trackId,
+						props.clip.id,
+						clipStart,
+						props.clip.start,
+					),
+				);
+			},
+		});
+	};
+
+	const onRightHandleDown = (e: PointerEvent): void => {
+		e.preventDefault();
+		e.stopPropagation();
+		const clipStart = props.clip.start;
+		const clipEnd = props.clip.end;
+		const clipOffset = props.clip.offset;
+		const duration = t.duration();
+		const buffer = audio.buffers().get(props.clip.src);
+		const bufferDur = buffer?.duration;
+
+		startPointerDrag(e, {
+			onMove: (dx) => {
+				const deltaSec = dx / t.view.zoom;
+				let nextEnd = clipEnd + deltaSec;
+				nextEnd = Math.min(duration, nextEnd);
+				if (bufferDur !== undefined) {
+					nextEnd = Math.min(clipStart + (bufferDur - clipOffset), nextEnd);
+				}
+				nextEnd = Math.max(clipStart + MIN_CLIP_SEC, nextEnd);
+				t.resizeAudioClipRight(props.trackId, props.clip.id, nextEnd);
+			},
+			onEnd: () => {
+				if (props.clip.end === clipEnd) return;
+				t.push(
+					resizeAudioClipRightCommand(
+						t.mutate,
+						props.trackId,
+						props.clip.id,
+						clipEnd,
+						props.clip.end,
+					),
+				);
+			},
+		});
 	};
 
 	return (
 		<div
 			class={`tl-audio-clip ${selected() ? "tl-audio-clip--selected" : ""}`}
 			style={{ transform: `translateX(${left()}px)`, width: `${widthPx()}px` }}
-			onPointerDown={onPointerDown}
+			onPointerDown={onBodyPointerDown}
 			data-clip-id={props.clip.id}
 		>
 			<canvas ref={canvas} class="tl-audio-clip__canvas" />
+			<div
+				class="tl-clip__handle tl-clip__handle--left"
+				onPointerDown={onLeftHandleDown}
+				aria-hidden="true"
+			/>
+			<div
+				class="tl-clip__handle tl-clip__handle--right"
+				onPointerDown={onRightHandleDown}
+				aria-hidden="true"
+			/>
 		</div>
 	);
 };

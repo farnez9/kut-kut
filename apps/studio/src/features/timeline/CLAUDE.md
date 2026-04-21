@@ -18,6 +18,9 @@ Raw setters, no history:
 - `resizeClipRight(trackId, clipId, newEnd)` — mutates end only. Clamp to `[clip.start + MIN_CLIP_SEC, sceneDuration]` at the call site.
 - `setKeyframeTime(trackId, clipId, index, newTime)` — sets a single keyframe's clip-local time. Does NOT sort.
 - `sortClipKeyframes(trackId, clipId)` — explicit sort after a keyframe drag.
+- `moveAudioClip(trackId, clipId, newStart)` — preserves `(end - start)` and `offset`.
+- `resizeAudioClipLeft(trackId, clipId, newStart)` — shifts `start` and `offset` by the same delta (non-slip). Clamp to `[max(0, start - offset), clip.end - MIN_CLIP_SEC]` at the call site.
+- `resizeAudioClipRight(trackId, clipId, newEnd)` — mutates `end` only. Clamp to `[start + MIN_CLIP_SEC, min(sceneDuration, start + (buffer.duration - offset))]` at the call site.
 
 Trim semantics match Premiere's non-slip behaviour: keyframes store clip-local times and are preserved across trim; ones that fall outside `[0, clip.end - clip.start]` are clamped at the edges by `evaluateClip`, not deleted.
 

@@ -18,6 +18,14 @@ const findClip = (draft: Timeline, trackId: string, clipId: string) => {
 	return clip;
 };
 
+const findAudioClip = (draft: Timeline, trackId: string, clipId: string) => {
+	const track = draft.tracks.find((t) => t.id === trackId);
+	if (!track || !isAudioTrack(track)) return null;
+	const clip = track.clips.find((c) => c.id === clipId);
+	if (!clip) return null;
+	return clip;
+};
+
 export const moveClipCommand = (
 	mutate: Mutator,
 	trackId: string,
@@ -203,6 +211,75 @@ export const setAudioTrackMutedCommand = (
 		label: next ? "Mute audio track" : "Unmute audio track",
 		apply: () => set(next),
 		invert: () => set(prev),
+	};
+};
+
+export const moveAudioClipCommand = (
+	mutate: Mutator,
+	trackId: string,
+	clipId: string,
+	prevStart: number,
+	nextStart: number,
+): Command => {
+	const set = (start: number): void => {
+		mutate((draft) => {
+			const clip = findAudioClip(draft, trackId, clipId);
+			if (!clip) return;
+			const duration = clip.end - clip.start;
+			clip.start = round(start);
+			clip.end = round(start + duration);
+		});
+	};
+	return {
+		label: "Move audio clip",
+		apply: () => set(nextStart),
+		invert: () => set(prevStart),
+	};
+};
+
+export const resizeAudioClipLeftCommand = (
+	mutate: Mutator,
+	trackId: string,
+	clipId: string,
+	prevStart: number,
+	nextStart: number,
+): Command => {
+	const shiftTo = (target: number): void => {
+		mutate((draft) => {
+			const clip = findAudioClip(draft, trackId, clipId);
+			if (!clip) return;
+			const next = round(target);
+			if (next === clip.start) return;
+			const delta = next - clip.start;
+			clip.start = next;
+			clip.offset = round(clip.offset + delta);
+		});
+	};
+	return {
+		label: "Trim audio clip left",
+		apply: () => shiftTo(nextStart),
+		invert: () => shiftTo(prevStart),
+	};
+};
+
+export const resizeAudioClipRightCommand = (
+	mutate: Mutator,
+	trackId: string,
+	clipId: string,
+	prevEnd: number,
+	nextEnd: number,
+): Command => {
+	const set = (end: number): void => {
+		mutate((draft) => {
+			const clip = findAudioClip(draft, trackId, clipId);
+			if (!clip) return;
+			clip.end = round(end);
+		});
+	};
+	return {
+		label: "Trim audio clip right",
+		apply: () => set(nextEnd),
+		invert: () => set(prevEnd),
 	};
 };
 

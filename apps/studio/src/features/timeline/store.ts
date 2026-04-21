@@ -1,4 +1,5 @@
 import {
+	type AudioClip,
 	type AudioTrack,
 	type Clip,
 	isAudioTrack,
@@ -22,6 +23,9 @@ export type TimelineStore = {
 	removeAudioTrackById: (id: string) => void;
 	setAudioTrackGain: (id: string, gain: number) => void;
 	setAudioTrackMuted: (id: string, muted: boolean) => void;
+	moveAudioClip: (trackId: string, clipId: string, newStart: number) => void;
+	resizeAudioClipLeft: (trackId: string, clipId: string, newStart: number) => void;
+	resizeAudioClipRight: (trackId: string, clipId: string, newEnd: number) => void;
 };
 
 const round = (v: number): number => Math.round(v * 1000) / 1000;
@@ -33,6 +37,16 @@ const findClipInDraft = (
 ): Clip<number> | undefined => {
 	const track = draft.tracks.find((t) => t.id === trackId);
 	if (!track || !isNumberTrack(track)) return undefined;
+	return track.clips.find((c) => c.id === clipId);
+};
+
+const findAudioClipInDraft = (
+	draft: Timeline,
+	trackId: string,
+	clipId: string,
+): AudioClip | undefined => {
+	const track = draft.tracks.find((t) => t.id === trackId);
+	if (!track || !isAudioTrack(track)) return undefined;
 	return track.clips.find((c) => c.id === clipId);
 };
 
@@ -128,6 +142,37 @@ export const createTimelineStore = (initial: Timeline): TimelineStore => {
 		});
 	};
 
+	const moveAudioClip = (trackId: string, clipId: string, newStart: number): void => {
+		mutate((draft) => {
+			const clip = findAudioClipInDraft(draft, trackId, clipId);
+			if (!clip) return;
+			const duration = clip.end - clip.start;
+			const start = round(newStart);
+			clip.start = start;
+			clip.end = round(start + duration);
+		});
+	};
+
+	const resizeAudioClipLeft = (trackId: string, clipId: string, newStart: number): void => {
+		mutate((draft) => {
+			const clip = findAudioClipInDraft(draft, trackId, clipId);
+			if (!clip) return;
+			const next = round(newStart);
+			if (next === clip.start) return;
+			const delta = next - clip.start;
+			clip.start = next;
+			clip.offset = round(clip.offset + delta);
+		});
+	};
+
+	const resizeAudioClipRight = (trackId: string, clipId: string, newEnd: number): void => {
+		mutate((draft) => {
+			const clip = findAudioClipInDraft(draft, trackId, clipId);
+			if (!clip) return;
+			clip.end = round(newEnd);
+		});
+	};
+
 	return {
 		timeline,
 		setTimeline,
@@ -141,5 +186,8 @@ export const createTimelineStore = (initial: Timeline): TimelineStore => {
 		removeAudioTrackById,
 		setAudioTrackGain,
 		setAudioTrackMuted,
+		moveAudioClip,
+		resizeAudioClipLeft,
+		resizeAudioClipRight,
 	};
 };

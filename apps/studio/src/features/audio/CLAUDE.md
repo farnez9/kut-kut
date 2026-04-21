@@ -64,11 +64,21 @@ The container MediaRecorder emits lands verbatim in `assets/`; no re-encoding. C
 
 Track removal (trash icon on the audio row) is a **soft delete** — it removes the track from `timeline.json` only. Keeping the file on disk means ⌘Z restores the track without needing to re-upload. The explicit "Clean" action is the hygiene step when the user wants the folder tidy.
 
+## Trim semantics
+
+Audio-clip drag mirrors number-clip drag (body + left handle + right handle), with one twist:
+
+- **Body drag** moves `start` + `end` together; `offset` is preserved so the audible sample at the clip's left edge stays identical.
+- **Left-trim** shifts `start` and `offset` by the same delta (non-slip): the audible sample at any fixed timeline position is unchanged; later samples appear at the clip's new left edge. Clamp at call site — `offset` can't go below 0.
+- **Right-trim** moves `end` only; `offset` and `start` untouched. Clamp at call site — `offset + (end - start) ≤ buffer.duration`. If the buffer isn't decoded yet, the buffer-length rail is skipped (harmless — rare).
+
+All three go through raw setters on `TimelineContext` during the drag; a single `moveAudioClipCommand` / `resizeAudioClipLeftCommand` / `resizeAudioClipRightCommand` is pushed on `pointerup`. Drag-in-progress isn't reflected in live audio playback; `createAudioPlayer.reconcile()` re-reads the clip window on the next transition after the drop.
+
 ## Non-scope
 
 - Peak-cache to disk (`projects/<name>/assets/.peaks/<hash>.bin`). Deferred pending evidence of slow startup.
 - Inspector UI for audio tracks/clips. Track mute + gain live inline on the timeline row; clip-level edits are data-model-only.
-- Clip move / trim for audio clips.
+- Snap / cross-track drop / multi-select / keyboard nudge / clip-split for audio clips — same deferrals as number clips.
 - Drag-and-drop import, multi-file batch.
 - Live mic monitoring, input-device picker, level meter, pause/resume mid-recording.
-- Captions (15), TTS (16), export audio (17).
+- Captions (16), TTS (17), export audio (18).

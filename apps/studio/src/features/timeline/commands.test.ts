@@ -17,9 +17,12 @@ import {
 import type { Command } from "../../lib/commands/index.ts";
 import {
 	addAudioTrackCommand,
+	moveAudioClipCommand,
 	moveClipCommand,
 	moveKeyframeCommand,
 	removeAudioTrackCommand,
+	resizeAudioClipLeftCommand,
+	resizeAudioClipRightCommand,
 	resizeClipLeftCommand,
 	resizeClipRightCommand,
 	setAudioTrackGainCommand,
@@ -218,6 +221,88 @@ describe("setAudioTrackMutedCommand", () => {
 		const cmd = setAudioTrackMutedCommand(mutatorFor(tl), "aud", false, true);
 		cmd.apply();
 		expect(findAudioTrack(tl, "aud")?.muted).toBe(true);
+		cmd.invert();
+		expect(snapshot(tl)).toBe(before);
+	});
+});
+
+const firstAudioClip = (tl: Timeline, trackId: string) => {
+	const track = tl.tracks.find((tr) => tr.id === trackId);
+	return track && isAudioTrack(track) ? track.clips[0] : undefined;
+};
+
+describe("moveAudioClipCommand", () => {
+	test("shifts start + end, preserves offset, inverts cleanly", () => {
+		const tl = buildTimeline();
+		const track = createAudioTrack({
+			id: "aud",
+			clips: [createAudioClip({ id: "aclp", src: "v.mp3", start: 1, end: 3, offset: 0.5 })],
+		});
+		addAudioTrackCommand(mutatorFor(tl), track).apply();
+		const before = snapshot(tl);
+		const cmd = moveAudioClipCommand(mutatorFor(tl), "aud", "aclp", 1, 2.25);
+		cmd.apply();
+		const clip = firstAudioClip(tl, "aud");
+		expect(clip?.start).toBe(2.25);
+		expect(clip?.end).toBe(4.25);
+		expect(clip?.offset).toBe(0.5);
+		cmd.invert();
+		expect(snapshot(tl)).toBe(before);
+	});
+});
+
+describe("resizeAudioClipLeftCommand", () => {
+	test("trim-left shifts start + offset by same delta (non-slip)", () => {
+		const tl = buildTimeline();
+		const track = createAudioTrack({
+			id: "aud",
+			clips: [createAudioClip({ id: "aclp", src: "v.mp3", start: 1, end: 3, offset: 0.2 })],
+		});
+		addAudioTrackCommand(mutatorFor(tl), track).apply();
+		const before = snapshot(tl);
+		const cmd = resizeAudioClipLeftCommand(mutatorFor(tl), "aud", "aclp", 1, 1.75);
+		cmd.apply();
+		const clip = firstAudioClip(tl, "aud");
+		expect(clip?.start).toBe(1.75);
+		expect(clip?.offset).toBe(0.95);
+		expect(clip?.end).toBe(3);
+		cmd.invert();
+		expect(snapshot(tl)).toBe(before);
+	});
+
+	test("trim-left grown past original start shifts offset negatively", () => {
+		const tl = buildTimeline();
+		const track = createAudioTrack({
+			id: "aud",
+			clips: [createAudioClip({ id: "aclp", src: "v.mp3", start: 1, end: 3, offset: 0.5 })],
+		});
+		addAudioTrackCommand(mutatorFor(tl), track).apply();
+		const cmd = resizeAudioClipLeftCommand(mutatorFor(tl), "aud", "aclp", 1, 0.75);
+		const before = snapshot(tl);
+		cmd.apply();
+		const clip = firstAudioClip(tl, "aud");
+		expect(clip?.start).toBe(0.75);
+		expect(clip?.offset).toBe(0.25);
+		cmd.invert();
+		expect(snapshot(tl)).toBe(before);
+	});
+});
+
+describe("resizeAudioClipRightCommand", () => {
+	test("trim-right moves end only, offset + start untouched", () => {
+		const tl = buildTimeline();
+		const track = createAudioTrack({
+			id: "aud",
+			clips: [createAudioClip({ id: "aclp", src: "v.mp3", start: 1, end: 3, offset: 0.4 })],
+		});
+		addAudioTrackCommand(mutatorFor(tl), track).apply();
+		const before = snapshot(tl);
+		const cmd = resizeAudioClipRightCommand(mutatorFor(tl), "aud", "aclp", 3, 2.5);
+		cmd.apply();
+		const clip = firstAudioClip(tl, "aud");
+		expect(clip?.end).toBe(2.5);
+		expect(clip?.start).toBe(1);
+		expect(clip?.offset).toBe(0.4);
 		cmd.invert();
 		expect(snapshot(tl)).toBe(before);
 	});
