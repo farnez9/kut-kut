@@ -1,5 +1,5 @@
 import type { AudioClip, AudioTrack, Peaks } from "@kut-kut/engine";
-import { Volume2, VolumeX } from "lucide-solid";
+import { Trash2, Volume2, VolumeX } from "lucide-solid";
 import { createEffect, For, type JSX } from "solid-js";
 import { useAudio } from "../audio/context.ts";
 import { useTimeline } from "./context.ts";
@@ -101,6 +101,9 @@ export const AudioTrackRow = (props: AudioTrackRowProps): JSX.Element => {
 		const next = Number(input.value);
 		if (Number.isFinite(next)) t.setAudioTrackGain(props.track.id, next);
 	};
+	const onRemove = (): void => {
+		t.removeAudioTrack(props.track.id);
+	};
 
 	return (
 		<div class="tl-track-row tl-track-row--audio" data-track-id={props.track.id}>
@@ -132,6 +135,15 @@ export const AudioTrackRow = (props: AudioTrackRowProps): JSX.Element => {
 					onChange={onGain}
 					title={`Gain ${props.track.gain.toFixed(2)}`}
 				/>
+				<button
+					type="button"
+					class="tl-audio-remove"
+					onClick={onRemove}
+					aria-label="Remove audio track"
+					title="Remove track"
+				>
+					<Trash2 size={13} strokeWidth={2.25} aria-hidden="true" />
+				</button>
 			</div>
 			<div class="tl-track-row__lane">
 				<For each={props.track.clips}>

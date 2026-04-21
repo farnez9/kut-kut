@@ -14,6 +14,7 @@ export {
 	PluginError,
 	type ProjectListing,
 	type ProjectState,
+	pruneAssets,
 	readProject,
 	uploadAsset,
 	writeTimeline,

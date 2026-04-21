@@ -2,6 +2,7 @@ import { isAudioTrack, isNumberTrack, type Track } from "@kut-kut/engine";
 import type { JSX } from "solid-js";
 import { createEffect, createSignal, For, onCleanup, onMount, Show } from "solid-js";
 import { useAudio } from "../audio/context.ts";
+import { CleanAssetsStatus, RecordError } from "../audio/index.ts";
 import { usePlayback } from "../playback/index.ts";
 import { AudioTrackRow } from "./AudioTrackRow.tsx";
 import { useTimeline } from "./context.ts";
@@ -94,6 +95,9 @@ export const TimelineView = (): JSX.Element => {
 	return (
 		<div class="tl-strip" ref={container} onWheel={onWheel}>
 			<SaveIndicator />
+			<TimelineImportError />
+			<RecordError />
+			<CleanAssetsStatus />
 			<Ruler laneWidth={laneWidth} />
 			<div class="tl-body" onPointerDown={onBodyPointerDown}>
 				<Show

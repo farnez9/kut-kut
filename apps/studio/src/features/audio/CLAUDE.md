@@ -1,17 +1,20 @@
 # features/audio
 
-Owns decoded `AudioBuffer`s, `Peaks`, the `AudioContext`, and the `AudioPlayer` for the active project. The engine scheduler (`createAudioPlayer`) stays transition-driven; this feature provides the buffers and the reactivity seam.
+Owns decoded `AudioBuffer`s, `Peaks`, the `AudioContext`, the `AudioPlayer`, and microphone recording for the active project. The engine scheduler (`createAudioPlayer`) stays transition-driven; this feature provides the buffers and the reactivity seam.
 
 See ADR 0009 (audio model, engine scheduler) and ADR 0010 (studio wiring).
 
 ## Contract
 
-- `<AudioProvider>` mounts **inside** `<TimelineProvider>` (reads timeline tracks + commands) and inside `<PlaybackProvider>` (via `AudioPlayerHost`). Exposes:
+- `<AudioProvider>` mounts **inside** `<TimelineProvider>` (reads timeline tracks + commands) and inside `<PlaybackProvider>` (needs `time()` at record-start; also via `AudioPlayerHost`). Exposes:
   - `buffers()` — `Map<string, AudioBuffer>` keyed by `clip.src` (project-relative).
   - `peaks()` — `Map<string, Peaks>` keyed the same way.
   - `decodeState()` — `Map<string, "pending" | "ready" | "error">`.
   - `importFile(file)` — upload via plugin → decode → peaks → `addAudioTrackCommand`.
   - `importState()` / `importError()` — surfaced by the timeline's import error banner.
+  - `recordSupported()` — `MediaRecorder` + `getUserMedia` feature detect.
+  - `startRecording()` / `stopRecording()` / `cancelRecording()` — mic capture wired to live playback.
+  - `recordState()` / `recordError()` / `recordElapsed()` — UI bindings for `<RecordButton>` and `<RecordError>`.
   - `ensureContext()` / `context()` — lazy `AudioContext`; first call must be inside a user gesture.
 - `<AudioPlayerHost>` mounts inside `<AudioProvider>`. Constructs `createAudioPlayer` on first `state() === "playing"`, and a `createEffect` calls `player.reconcile()` whenever buffers change or any audio track's `muted`/`gain`/clip count changes.
 
@@ -30,21 +33,42 @@ On mount and on `timeline.tracks` change:
 
 Peaks are in memory only — no disk cache this session (ADR 0010 non-goal).
 
-## Import
+## Import and ingest
 
-`importFile(file)`:
+Both `importFile` (file picker) and `stopRecording` (mic) funnel through a private `ingestAudioFile(file, startAt)`:
 
-1. `ensureContext()` — inside the click handler's gesture.
-2. `uploadAsset(projectName, file)` → `assets/<basename>` via the plugin.
-3. `fetch(/@fs/<abs>/<path>)` → `ArrayBuffer` → `decodeAudio` → `computePeaks` → stash under `path`.
-4. `addAudioTrackCommand(timeline, track)` — undoable; ⌘Z removes the track (buffer + peaks remain cached in-memory until project swap).
+1. `uploadAsset(projectName, file)` → `assets/<basename>` via the plugin.
+2. `fetch(/@fs/<abs>/<path>)` → `ArrayBuffer` → `decodeAudio` → `computePeaks` → stash under `path`.
+3. `addAudioTrackCommand(timeline, track)` with `clip.start = startAt`, `clip.end = startAt + buffer.duration` — undoable; ⌘Z removes the track (buffer + peaks remain cached in-memory until project swap).
 
-Collisions: `uploadAsset` overwrites by name (current plugin behavior). Acceptable for v1.
+`importFile` passes `startAt = 0`. Collisions: `uploadAsset` overwrites by name (current plugin behavior). Acceptable for v1.
+
+## Recording
+
+`startRecording()`:
+
+1. Feature-detect (`recordSupported()`). `ensureContext()` — inside the click handler's gesture.
+2. `navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } })`; capture `startAt = playback.time()`. Default constraints are off because they're tuned for voice calls and audibly colour narration/content audio — we want the raw mic input.
+3. `new MediaRecorder(stream, { mimeType })` where `mimeType` comes from `pickRecordingMime()` (`audio/webm;codecs=opus` preferred).
+4. Kick playback via `playback.play()` and start the elapsed timer.
+
+`stopRecording()` assembles chunks into a `Blob`, wraps as `File(voiceover-YYYYMMDD-HHMMSS.<ext>)`, pauses playback, and calls `ingestAudioFile(file, startAt)`.
+
+`cancelRecording()` detaches recorder handlers, stops the stream tracks, and resets state without writing to disk. `onCleanup` calls it on provider teardown (project swap / HMR).
+
+The container MediaRecorder emits lands verbatim in `assets/`; no re-encoding. Chromium decodes webm/opus and mp4/aac natively through the same `decodeAudio` path as imports.
+
+## Clean unused assets
+
+`<CleanAssetsButton>` in the timeline header calls `pruneAssets(name, keep)` where `keep` is every `clip.src` referenced by any audio track in the current timeline. The plugin's `POST /assets/prune` endpoint lists `assets/`, validates each entry against `ASSET_NAME_RE`, and deletes any file not in `keep`. Returns `{ deleted: string[] }` which the button surfaces via a 4s transient banner.
+
+Track removal (trash icon on the audio row) is a **soft delete** — it removes the track from `timeline.json` only. Keeping the file on disk means ⌘Z restores the track without needing to re-upload. The explicit "Clean" action is the hygiene step when the user wants the folder tidy.
 
 ## Non-scope
 
 - Peak-cache to disk (`projects/<name>/assets/.peaks/<hash>.bin`). Deferred pending evidence of slow startup.
 - Inspector UI for audio tracks/clips. Track mute + gain live inline on the timeline row; clip-level edits are data-model-only.
-- Clip move / trim for audio clips. Sessions 14+.
+- Clip move / trim for audio clips.
 - Drag-and-drop import, multi-file batch.
-- Voiceover recording (session 14), captions (15), TTS (16), export audio (17).
+- Live mic monitoring, input-device picker, level meter, pause/resume mid-recording.
+- Captions (15), TTS (16), export audio (17).

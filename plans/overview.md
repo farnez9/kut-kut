@@ -1,6 +1,6 @@
 # Kut-Kut — overview
 
-**Last updated:** 2026-04-20 (session 13 shipped)
+**Last updated:** 2026-04-21 (session 14 shipped)
 
 ## Product
 
@@ -17,11 +17,11 @@ A general-purpose, local-first authoring tool for 2D and 3D animated videos. You
 
 **Engine.** Scene graph (`Node`/`Group`/`Transform`, 2D and 3D layers, `Rect` and `Box` primitives) with Solid-reactive properties. Project schema validated by valibot, with versioned migrations. Timeline model: `Track`/`Clip`/`Keyframe` per track kind (`number`, `audio`), curated easings, pure `evaluateClip`/`evaluateTrack`, `applyTimeline` resolving dotted node paths. `PlaybackController` with `play`/`pause`/`seek`/`restart`/`dispose` and `onTransition` callback (drift-free, SSR-safe). Renderer interface with Pixi 2D + Three 3D adapters composed via `createCompositor` (stacked canvases, WebGPU → WebGL fallback). Overlay v2 as a property-override + structural-op layer: `applyOverlay` + `applyNodeOps`, migration from v1. Audio: `AudioTrack`/`AudioClip`, `decodeAudio`, `computePeaks`, `createAudioPlayer` driven by `PlaybackController.onTransition`.
 
-**Studio.** CSS-grid shell (topbar / sidebars / preview / bottom timeline) with aquamarine accent. Project slice lists `projects/` and dynamically imports `scene.ts`. Preview host mounts compositor, applies overlay + timeline per frame, rebuilds on structural overlay change via keyed `<Show>`. Interactive timeline: ruler, draggable playhead, clip drag, clip trim, keyframe drag (with reorder), easing glyphs, ctrl+wheel zoom, collapse toggle, 300 ms debounced single-flight persistence. Inspector: keyframe > node > clip selection precedence, transform editors (`NumberInput`, `Vec3Input`). Layers panel with add/delete/restore, unique-name picker. Record mode toggle (`R` hotkey) routes inspector commits to keyframes inside clip windows. Unified command store (cap 200) spans timeline + overlay; `⌘Z` / `⌘⇧Z` work across surfaces. Audio: `<AudioProvider>` owns decoded buffers + peaks keyed by `clip.src` (lazy `AudioContext`, decode-on-tracks-change), `<AudioPlayerHost>` mounts the engine player and calls `reconcile()` on buffer/track edits, timeline renders an audio row with inline mute + gain and a canvas waveform per clip, import button uploads via plugin → decodes → undoable `addAudioTrackCommand`.
+**Studio.** CSS-grid shell (topbar / sidebars / preview / bottom timeline) with aquamarine accent. Project slice lists `projects/` and dynamically imports `scene.ts`. Preview host mounts compositor, applies overlay + timeline per frame, rebuilds on structural overlay change via keyed `<Show>`. Interactive timeline: ruler, draggable playhead, clip drag, clip trim, keyframe drag (with reorder), easing glyphs, ctrl+wheel zoom, collapse toggle, 300 ms debounced single-flight persistence. Inspector: keyframe > node > clip selection precedence, transform editors (`NumberInput`, `Vec3Input`). Layers panel with add/delete/restore, unique-name picker. Record mode toggle (`R` hotkey) routes inspector commits to keyframes inside clip windows. Unified command store (cap 200) spans timeline + overlay; `⌘Z` / `⌘⇧Z` work across surfaces. Audio: `<AudioProvider>` owns decoded buffers + peaks keyed by `clip.src` (lazy `AudioContext`, decode-on-tracks-change), `<AudioPlayerHost>` mounts the engine player and calls `reconcile()` on buffer/track edits, timeline renders an audio row with inline mute + gain and a canvas waveform per clip. Both file import and microphone recording funnel through a shared `ingestAudioFile` tail (upload via plugin → decode → peaks → undoable `addAudioTrackCommand`); `<RecordButton>` drives MediaRecorder against live playback, clip `start` = playback time at record-begin.
 
 **Plugin.** `apps/studio/vite/project-fs.ts` — endpoints: list projects, read project (timeline + overlay + asset manifest), write timeline, write overlay, upload asset. Path-safety via name regex + `path.relative` containment.
 
-**Next session:** 14 — voiceover recording (MediaRecorder against live playback, blob → plugin → `assets/`, added as audio clip).
+**Next session:** 15 — audio clip editing (drag/trim audio clips, offset-aware waveform, undoable via unified command store).
 
 ## Architecture
 
@@ -60,13 +60,13 @@ See `plans/decisions/0001-architecture-choices.md` for locked decisions. Key spl
 
 | #   | Session                               | Ships |
 |-----|---------------------------------------|-------|
-| 14  | Voiceover recording                   | MediaRecorder wired to live playback, blob → plugin → `assets/`, added as audio clip |
-| 15  | Captions                              | Caption track type, editor bound to timeline/audio track, 2D text overlay, SRT/VTT import/export |
-| 16  | TTS: adapters + panel                 | Provider iface, WebSpeech adapter, ElevenLabs adapter, studio panel, output saved via plugin |
-| 17  | Engine: export pipeline               | WebCodecs video + audio encode, mp4-muxer, progress/cancel, browser download, export dialog |
-| 18  | Short-form vertical mode + aspects    | 16:9 / 9:16 / 1:1 presets, safe-zone guides, per-aspect export configs |
-| 19  | Code-first scene authoring polish     | `scene.ts` conventions + helpers, HMR story for scene edits, starter examples |
-| 20+ | Polish + publish prep                 | Shortcuts, a11y, perf profiling, docs, engine publish prep |
+| 15  | Audio clip editing                    | Drag + trim-left/right on audio clips, offset-aware waveform, three new undoable commands |
+| 16  | Captions                              | Caption track type, editor bound to timeline/audio track, 2D text overlay, SRT/VTT import/export |
+| 17  | TTS: adapters + panel                 | Provider iface, WebSpeech adapter, ElevenLabs adapter, studio panel, output saved via plugin |
+| 18  | Engine: export pipeline               | WebCodecs video + audio encode, mp4-muxer, progress/cancel, browser download, export dialog |
+| 19  | Short-form vertical mode + aspects    | 16:9 / 9:16 / 1:1 presets, safe-zone guides, per-aspect export configs |
+| 20  | Code-first scene authoring polish     | `scene.ts` conventions + helpers, HMR story for scene edits, starter examples |
+| 21+ | Polish + publish prep                 | Shortcuts, a11y, perf profiling, docs, engine publish prep |
 
 ## Progress log
 
@@ -85,6 +85,7 @@ One line per completed session — the canonical "what exists". Append at sessio
 - **11** (2026-04-19) Record mode + unified undo: record-mode toggle, generalized command store spanning timeline + overlay, inspector→keyframe routing, ⌘Z across surfaces. → ADR 0008
 - **12** (2026-04-19) Audio core: `AudioTrack`/`AudioClip`, schema v2 + migration, `decodeAudio`, `computePeaks`, `createAudioPlayer` routed through per-track gain nodes, playback sync via `onTransition`. → ADR 0009
 - **13** (2026-04-20) Studio audio panel: `<AudioProvider>` (lazy `AudioContext`, buffers/peaks by `clip.src`, decode-on-tracks-change), `<AudioPlayerHost>` (lazy player + `reconcile()` seam), audio timeline row with inline mute/gain + canvas waveform, import button (plugin upload → decode → undoable add-track). → ADR 0010
+- **14** (2026-04-21) Voiceover recording: `MediaRecorder` wired to live playback (clip `start` = playback time at record-begin), shared `ingestAudioFile` tail with import, `<RecordButton>` with elapsed timer + feature-detect fallback, pure helpers (`pickRecordingMime`, `extensionForMime`, `makeRecordingFilename`).
 
 ## Performance & memory budgets
 

@@ -70,3 +70,11 @@ export const uploadAsset = async (name: string, file: File): Promise<AssetRef> =
 		body: form,
 	})) as AssetRef;
 };
+
+export const pruneAssets = async (name: string, keep: string[]): Promise<{ deleted: string[] }> => {
+	return (await request(`/__kk/projects/${encodeURIComponent(name)}/assets/prune`, {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify({ keep }),
+	})) as { deleted: string[] };
+};

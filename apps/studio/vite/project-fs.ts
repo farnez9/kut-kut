@@ -285,6 +285,67 @@ const uploadAssetHandler = async (
 	});
 };
 
+const pruneAssetsHandler = async (
+	req: IncomingMessage,
+	res: ServerResponse,
+	projectsDir: string,
+	name: string,
+): Promise<void> => {
+	const projectPath = safeProjectPath(projectsDir, name);
+	if (!projectPath) {
+		jsonResponse(res, 400, { error: "invalid project name" });
+		return;
+	}
+	let body: unknown;
+	try {
+		body = await readJsonBody(req);
+	} catch (err) {
+		jsonResponse(res, 400, { error: "invalid json", detail: (err as Error).message });
+		return;
+	}
+	if (
+		body === null ||
+		typeof body !== "object" ||
+		!Array.isArray((body as { keep?: unknown }).keep)
+	) {
+		jsonResponse(res, 400, { error: "expected { keep: string[] } in body" });
+		return;
+	}
+	const keep = new Set<string>();
+	for (const entry of (body as { keep: unknown[] }).keep) {
+		if (typeof entry !== "string") continue;
+		if (!entry.startsWith("assets/")) continue;
+		const base = entry.slice("assets/".length);
+		if (!ASSET_NAME_RE.test(base)) continue;
+		keep.add(base);
+	}
+	const assetsDir = path.join(projectPath, "assets");
+	let entries: import("node:fs").Dirent[];
+	try {
+		entries = await fs.readdir(assetsDir, { withFileTypes: true });
+	} catch (err) {
+		if ((err as NodeJS.ErrnoException).code === "ENOENT") {
+			jsonResponse(res, 200, { deleted: [] });
+			return;
+		}
+		throw err;
+	}
+	const deleted: string[] = [];
+	for (const entry of entries) {
+		if (!entry.isFile()) continue;
+		if (entry.name.startsWith(".")) continue;
+		if (!ASSET_NAME_RE.test(entry.name)) continue;
+		if (keep.has(entry.name)) continue;
+		const target = path.resolve(assetsDir, entry.name);
+		const rel = path.relative(assetsDir, target);
+		if (rel !== entry.name || rel.startsWith("..")) continue;
+		await fs.unlink(target);
+		deleted.push(`assets/${entry.name}`);
+	}
+	deleted.sort((a, b) => a.localeCompare(b));
+	jsonResponse(res, 200, { deleted });
+};
+
 const matchProjectRoute = (pathname: string): RouteMatch | null => {
 	const prefix = "/projects/";
 	if (!pathname.startsWith(prefix)) return null;
@@ -325,6 +386,10 @@ const handle = async (
 	}
 	if (match.rest === "/assets" && req.method === "POST") {
 		await uploadAssetHandler(req, res, projectsDir, match.name);
+		return true;
+	}
+	if (match.rest === "/assets/prune" && req.method === "POST") {
+		await pruneAssetsHandler(req, res, projectsDir, match.name);
 		return true;
 	}
 	return false;

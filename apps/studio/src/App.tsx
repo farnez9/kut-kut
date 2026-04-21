@@ -1,7 +1,12 @@
 import { ChevronDown } from "lucide-solid";
 import type { JSX } from "solid-js";
 import { createEffect, createSignal, on, Show, useContext } from "solid-js";
-import { AudioPlayerHost, AudioProvider } from "./features/audio/index.ts";
+import {
+	AudioPlayerHost,
+	AudioProvider,
+	CleanAssetsButton,
+	RecordButton,
+} from "./features/audio/index.ts";
 import { Inspector, InspectorHint } from "./features/inspector/index.ts";
 import { LayersPanel } from "./features/layers/index.ts";
 import { OverlayProvider, useOverlay } from "./features/overlay/index.ts";
@@ -206,15 +211,6 @@ const TimelineBody = (): JSX.Element => {
 	);
 };
 
-const TimelineImportErrorBody = (): JSX.Element => {
-	const ctx = useContext(TimelineContext);
-	return (
-		<Show when={ctx}>
-			<TimelineImportError />
-		</Show>
-	);
-};
-
 const TimelineHeaderActions = (props: {
 	collapsed: boolean;
 	onToggle: () => void;
@@ -224,6 +220,8 @@ const TimelineHeaderActions = (props: {
 		<div class="app-timeline__actions">
 			<Show when={ctx && !props.collapsed}>
 				<TimelineImportButton />
+				<RecordButton />
+				<CleanAssetsButton />
 			</Show>
 			<button
 				type="button"
@@ -337,7 +335,6 @@ const Shell = (): JSX.Element => {
 					<TimelineHeaderActions collapsed={collapsed()} onToggle={() => setCollapsed((v) => !v)} />
 				</div>
 				<Show when={!collapsed()}>
-					<TimelineImportErrorBody />
 					<TimelineBody />
 				</Show>
 			</section>

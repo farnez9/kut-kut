@@ -982,6 +982,12 @@ button:focus-visible {
 	pointer-events: none;
 }
 
+.tl-save-banner--info {
+	color: var(--hot);
+	background: color-mix(in oklab, var(--hot) 14%, transparent);
+	border-color: color-mix(in oklab, var(--hot) 40%, transparent);
+}
+
 /* ───── layers panel ───── */
 
 .app-left {
@@ -1212,6 +1218,25 @@ button:focus-visible {
 	accent-color: var(--hot);
 }
 
+.tl-audio-remove {
+	width: 22px;
+	height: 22px;
+	border-radius: 3px;
+	border: 1px solid var(--rule);
+	background: var(--ink-0);
+	color: var(--paper-mute);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	flex: 0 0 auto;
+}
+
+.tl-audio-remove:hover {
+	color: var(--rec);
+	border-color: color-mix(in oklab, var(--rec) 60%, transparent);
+}
+
 .tl-audio-clip {
 	position: absolute;
 	top: 6px;
@@ -1248,6 +1273,9 @@ button:focus-visible {
 }
 
 .tl-import-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
 	padding: 2px 8px;
 	font-family: var(--font-mono);
 	font-size: 11px;
@@ -1268,4 +1296,63 @@ button:focus-visible {
 .tl-import-btn:disabled {
 	opacity: 0.6;
 	cursor: default;
+}
+
+.tl-record-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 2px 8px;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	background: var(--ink-0);
+	color: var(--paper-dim);
+	border: 1px solid var(--rule);
+	border-radius: 2px;
+	cursor: pointer;
+}
+
+.tl-record-btn:hover:not(:disabled) {
+	color: var(--hot);
+	border-color: var(--hot);
+}
+
+.tl-record-btn:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
+.tl-record-btn--on {
+	color: var(--rec);
+	border-color: color-mix(in oklab, var(--rec) 60%, transparent);
+	background: color-mix(in oklab, var(--rec) 10%, var(--ink-0));
+}
+
+.tl-record-btn--on:hover:not(:disabled) {
+	color: var(--rec);
+	border-color: var(--rec);
+}
+
+.tl-record-btn__dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--rec);
+	animation: tl-record-pulse 1.1s ease-in-out infinite;
+}
+
+.tl-record-btn__text {
+	font-variant-numeric: tabular-nums;
+}
+
+@keyframes tl-record-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.3;
+	}
 }
