@@ -1,15 +1,19 @@
 import { describe, expect, test } from "bun:test";
 import {
 	type AudioTrack,
+	type CaptionTrack,
 	type Clip,
 	createAudioClip,
 	createAudioTrack,
+	createCaptionClip,
+	createCaptionTrack,
 	createClip,
 	createKeyframe,
 	createTimeline,
 	createTrack,
 	EasingName,
 	isAudioTrack,
+	isCaptionTrack,
 	isNumberTrack,
 	type Keyframe,
 	type Timeline,
@@ -17,16 +21,24 @@ import {
 import type { Command } from "../../lib/commands/index.ts";
 import {
 	addAudioTrackCommand,
+	addCaptionClipCommand,
+	addCaptionTrackCommand,
 	moveAudioClipCommand,
+	moveCaptionClipCommand,
 	moveClipCommand,
 	moveKeyframeCommand,
 	removeAudioTrackCommand,
+	removeCaptionClipCommand,
+	removeCaptionTrackCommand,
 	resizeAudioClipLeftCommand,
 	resizeAudioClipRightCommand,
+	resizeCaptionClipLeftCommand,
+	resizeCaptionClipRightCommand,
 	resizeClipLeftCommand,
 	resizeClipRightCommand,
 	setAudioTrackGainCommand,
 	setAudioTrackMutedCommand,
+	setCaptionTextCommand,
 	upsertKeyframeCommand,
 } from "./commands.ts";
 import type { Mutator } from "./store.ts";
@@ -305,6 +317,152 @@ describe("resizeAudioClipRightCommand", () => {
 		expect(clip?.offset).toBe(0.4);
 		cmd.invert();
 		expect(snapshot(tl)).toBe(before);
+	});
+});
+
+const findCaptionTrack = (tl: Timeline, id: string): CaptionTrack | undefined => {
+	const t = tl.tracks.find((tr) => tr.id === id);
+	return t && isCaptionTrack(t) ? t : undefined;
+};
+
+describe("addCaptionTrackCommand", () => {
+	test("apply appends, invert removes", () => {
+		const tl = buildTimeline();
+		const track = createCaptionTrack({
+			id: "cap",
+			clips: [createCaptionClip({ id: "cc1", start: 0, end: 1, text: "hi" })],
+		});
+		const before = snapshot(tl);
+		const cmd = addCaptionTrackCommand(mutatorFor(tl), track);
+		cmd.apply();
+		expect(findCaptionTrack(tl, "cap")?.clips[0]?.text).toBe("hi");
+		cmd.invert();
+		expect(snapshot(tl)).toBe(before);
+	});
+
+	test("apply is idempotent when track already present", () => {
+		const tl = buildTimeline();
+		const track = createCaptionTrack({ id: "cap" });
+		const cmd = addCaptionTrackCommand(mutatorFor(tl), track);
+		cmd.apply();
+		const after = snapshot(tl);
+		cmd.apply();
+		expect(snapshot(tl)).toBe(after);
+	});
+});
+
+describe("removeCaptionTrackCommand", () => {
+	test("apply removes, invert restores the captured track", () => {
+		const tl = buildTimeline();
+		const track = createCaptionTrack({
+			id: "cap",
+			clips: [createCaptionClip({ id: "cc1", start: 0, end: 1, text: "hi" })],
+		});
+		addCaptionTrackCommand(mutatorFor(tl), track).apply();
+		const mid = snapshot(tl);
+		removeCaptionTrackCommand(mutatorFor(tl), "cap", track).apply();
+		expect(findCaptionTrack(tl, "cap")).toBeUndefined();
+		removeCaptionTrackCommand(mutatorFor(tl), "cap", track).invert();
+		expect(snapshot(tl)).toBe(mid);
+	});
+});
+
+describe("addCaptionClipCommand / removeCaptionClipCommand", () => {
+	test("add then remove round-trips", () => {
+		const tl = buildTimeline();
+		addCaptionTrackCommand(mutatorFor(tl), createCaptionTrack({ id: "cap" })).apply();
+		const before = snapshot(tl);
+		const clip = createCaptionClip({ id: "cc", start: 0.5, end: 1.5, text: "ok" });
+		addCaptionClipCommand(mutatorFor(tl), "cap", clip).apply();
+		expect(findCaptionTrack(tl, "cap")?.clips).toHaveLength(1);
+		removeCaptionClipCommand(mutatorFor(tl), "cap", clip).apply();
+		expect(snapshot(tl)).toBe(before);
+	});
+});
+
+describe("moveCaptionClipCommand", () => {
+	test("preserves duration and inverts cleanly", () => {
+		const tl = buildTimeline();
+		const clip = createCaptionClip({ id: "cc", start: 1, end: 3, text: "x" });
+		addCaptionTrackCommand(
+			mutatorFor(tl),
+			createCaptionTrack({ id: "cap", clips: [clip] }),
+		).apply();
+		const before = snapshot(tl);
+		const cmd = moveCaptionClipCommand(mutatorFor(tl), "cap", "cc", 1, 2.5);
+		cmd.apply();
+		const moved = findCaptionTrack(tl, "cap")?.clips[0];
+		expect(moved?.start).toBe(2.5);
+		expect(moved?.end).toBe(4.5);
+		cmd.invert();
+		expect(snapshot(tl)).toBe(before);
+	});
+});
+
+describe("resizeCaptionClipLeftCommand", () => {
+	test("moves start only", () => {
+		const tl = buildTimeline();
+		const clip = createCaptionClip({ id: "cc", start: 1, end: 3, text: "x" });
+		addCaptionTrackCommand(
+			mutatorFor(tl),
+			createCaptionTrack({ id: "cap", clips: [clip] }),
+		).apply();
+		const before = snapshot(tl);
+		const cmd = resizeCaptionClipLeftCommand(mutatorFor(tl), "cap", "cc", 1, 1.4);
+		cmd.apply();
+		const moved = findCaptionTrack(tl, "cap")?.clips[0];
+		expect(moved?.start).toBe(1.4);
+		expect(moved?.end).toBe(3);
+		cmd.invert();
+		expect(snapshot(tl)).toBe(before);
+	});
+});
+
+describe("resizeCaptionClipRightCommand", () => {
+	test("moves end only", () => {
+		const tl = buildTimeline();
+		const clip = createCaptionClip({ id: "cc", start: 1, end: 3, text: "x" });
+		addCaptionTrackCommand(
+			mutatorFor(tl),
+			createCaptionTrack({ id: "cap", clips: [clip] }),
+		).apply();
+		const before = snapshot(tl);
+		const cmd = resizeCaptionClipRightCommand(mutatorFor(tl), "cap", "cc", 3, 2.5);
+		cmd.apply();
+		expect(findCaptionTrack(tl, "cap")?.clips[0]?.end).toBe(2.5);
+		cmd.invert();
+		expect(snapshot(tl)).toBe(before);
+	});
+});
+
+describe("setCaptionTextCommand", () => {
+	test("apply/invert roundtrip", () => {
+		const tl = buildTimeline();
+		const clip = createCaptionClip({ id: "cc", start: 0, end: 1, text: "old" });
+		addCaptionTrackCommand(
+			mutatorFor(tl),
+			createCaptionTrack({ id: "cap", clips: [clip] }),
+		).apply();
+		const before = snapshot(tl);
+		const cmd = setCaptionTextCommand(mutatorFor(tl), "cap", "cc", "old", "new");
+		cmd.apply();
+		expect(findCaptionTrack(tl, "cap")?.clips[0]?.text).toBe("new");
+		cmd.invert();
+		expect(snapshot(tl)).toBe(before);
+	});
+
+	test("re-apply after apply is a no-op (idempotent)", () => {
+		const tl = buildTimeline();
+		const clip = createCaptionClip({ id: "cc", start: 0, end: 1, text: "old" });
+		addCaptionTrackCommand(
+			mutatorFor(tl),
+			createCaptionTrack({ id: "cap", clips: [clip] }),
+		).apply();
+		const cmd = setCaptionTextCommand(mutatorFor(tl), "cap", "cc", "old", "new");
+		cmd.apply();
+		const after = snapshot(tl);
+		cmd.apply();
+		expect(snapshot(tl)).toBe(after);
 	});
 });
 

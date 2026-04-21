@@ -104,6 +104,18 @@
 					]
 				}
 			]
+		},
+		{
+			"id": "dc5ba4e7-a1d4-4be5-8b33-3546fcffad73",
+			"kind": "caption",
+			"clips": [
+				{
+					"id": "58f1bef2-dac7-4e43-9c3f-5139239e4aa9",
+					"start": 1.056,
+					"end": 4.049,
+					"text": "remind me of what we're doing here man, here go baby"
+				}
+			]
 		}
 	]
 }

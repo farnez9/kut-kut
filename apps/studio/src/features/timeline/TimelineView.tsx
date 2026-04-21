@@ -1,10 +1,22 @@
-import { isAudioTrack, isNumberTrack, type Track } from "@kut-kut/engine";
+import {
+	createCaptionTrack,
+	isAudioTrack,
+	isCaptionTrack,
+	isNumberTrack,
+	parseSRT,
+	parseVTT,
+	serializeSRT,
+	serializeVTT,
+	type Track,
+} from "@kut-kut/engine";
 import type { JSX } from "solid-js";
 import { createEffect, createSignal, For, onCleanup, onMount, Show } from "solid-js";
 import { useAudio } from "../audio/context.ts";
 import { CleanAssetsStatus, RecordError } from "../audio/index.ts";
 import { usePlayback } from "../playback/index.ts";
 import { AudioTrackRow } from "./AudioTrackRow.tsx";
+import { CaptionTrackRow } from "./CaptionTrackRow.tsx";
+import { addCaptionTrackCommand } from "./commands.ts";
 import { useTimeline } from "./context.ts";
 import { LABEL_WIDTH } from "./layout.ts";
 import { pxToTime, timeToPx } from "./mapping.ts";
@@ -119,6 +131,7 @@ export const TimelineView = (): JSX.Element => {
 const TrackRouter = (props: { track: Track }): JSX.Element => {
 	const track = props.track;
 	if (isAudioTrack(track)) return <AudioTrackRow track={track} />;
+	if (isCaptionTrack(track)) return <CaptionTrackRow track={track} />;
 	if (isNumberTrack(track)) return <NumberTrackRow track={track} />;
 	return null;
 };
@@ -168,5 +181,102 @@ export const TimelineImportError = (): JSX.Element => {
 				Audio import failed — {audio.importError()?.message ?? "unknown error"}
 			</div>
 		</Show>
+	);
+};
+
+const downloadTextFile = (filename: string, contents: string, mime: string): void => {
+	const blob = new Blob([contents], { type: mime });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = filename;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
+};
+
+export const CaptionTrackButtons = (): JSX.Element => {
+	const t = useTimeline();
+	let fileInput!: HTMLInputElement;
+
+	const firstCaptionTrack = () => t.timeline.tracks.find(isCaptionTrack);
+
+	const onAdd = (): void => {
+		t.push(addCaptionTrackCommand(t.mutate, createCaptionTrack()));
+	};
+
+	const onImport = (): void => {
+		fileInput.click();
+	};
+
+	const onImportChange = async (): Promise<void> => {
+		const file = fileInput.files?.[0];
+		fileInput.value = "";
+		if (!file) return;
+		const text = await file.text();
+		const ext = file.name.toLowerCase().split(".").pop();
+		const clips = ext === "vtt" ? parseVTT(text) : parseSRT(text);
+		if (clips.length === 0) {
+			console.warn("[captions] import produced no cues");
+			return;
+		}
+		t.push(addCaptionTrackCommand(t.mutate, createCaptionTrack({ clips })));
+	};
+
+	const onExport = (): void => {
+		const track = firstCaptionTrack();
+		if (!track) return;
+		const contents = serializeSRT(track.clips);
+		if (contents.length === 0) return;
+		downloadTextFile("captions.srt", contents, "application/x-subrip");
+	};
+
+	const onExportVtt = (): void => {
+		const track = firstCaptionTrack();
+		if (!track) return;
+		const contents = serializeVTT(track.clips);
+		downloadTextFile("captions.vtt", contents, "text/vtt");
+	};
+
+	return (
+		<>
+			<input
+				ref={fileInput}
+				type="file"
+				accept=".srt,.vtt,application/x-subrip,text/vtt"
+				style={{ display: "none" }}
+				onChange={onImportChange}
+			/>
+			<button type="button" class="tl-import-btn" onClick={onAdd} title="Add caption track">
+				Add captions
+			</button>
+			<button
+				type="button"
+				class="tl-import-btn"
+				onClick={onImport}
+				title="Import captions (.srt / .vtt)"
+			>
+				Import SRT/VTT
+			</button>
+			<button
+				type="button"
+				class="tl-import-btn"
+				onClick={onExport}
+				disabled={!firstCaptionTrack() || firstCaptionTrack()?.clips.length === 0}
+				title="Export first caption track as SRT"
+			>
+				Export SRT
+			</button>
+			<button
+				type="button"
+				class="tl-import-btn"
+				onClick={onExportVtt}
+				disabled={!firstCaptionTrack()}
+				title="Export first caption track as VTT"
+			>
+				Export VTT
+			</button>
+		</>
 	);
 };

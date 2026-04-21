@@ -1,15 +1,19 @@
 export { applyTimeline } from "./apply.ts";
 export { type EasingFn, EasingName, easings } from "./easing.ts";
-export { evaluateClip, evaluateTrack } from "./evaluate.ts";
+export { evaluateCaptionTrack, evaluateClip, evaluateTrack } from "./evaluate.ts";
 export {
 	type CreateAudioClipOptions,
 	type CreateAudioTrackOptions,
+	type CreateCaptionClipOptions,
+	type CreateCaptionTrackOptions,
 	type CreateClipOptions,
 	type CreateKeyframeOptions,
 	type CreateTimelineOptions,
 	type CreateTrackOptions,
 	createAudioClip,
 	createAudioTrack,
+	createCaptionClip,
+	createCaptionTrack,
 	createClip,
 	createKeyframe,
 	createTimeline,
@@ -25,8 +29,11 @@ export {
 export {
 	type AudioClip,
 	type AudioTrack,
+	type CaptionClip,
+	type CaptionTrack,
 	type Clip,
 	isAudioTrack,
+	isCaptionTrack,
 	isNumberTrack,
 	isTrackTargetByPath,
 	type Keyframe,

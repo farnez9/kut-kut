@@ -1,6 +1,9 @@
 import {
 	type AudioTrack,
+	type CaptionClip,
+	type CaptionTrack,
 	isAudioTrack,
+	isCaptionTrack,
 	isNumberTrack,
 	isTrackTargetByPath,
 	type Timeline,
@@ -10,7 +13,11 @@ import { createStore } from "solid-js/store";
 import { useCommands } from "../../lib/commands/index.ts";
 import {
 	addAudioTrackCommand,
+	addCaptionClipCommand,
+	addCaptionTrackCommand,
 	removeAudioTrackCommand,
+	removeCaptionClipCommand,
+	removeCaptionTrackCommand,
 	setAudioTrackGainCommand,
 	setAudioTrackMutedCommand,
 } from "./commands.ts";
@@ -79,6 +86,33 @@ export const TimelineProvider = (props: TimelineProviderProps): JSX.Element => {
 		commands.push(setAudioTrackMutedCommand(store.mutate, trackId, track.muted, next));
 	};
 
+	const findCaptionTrack = (trackId: string): CaptionTrack | null => {
+		const t = store.timeline.tracks.find((tr) => tr.id === trackId);
+		return t && isCaptionTrack(t) ? t : null;
+	};
+
+	const addCaptionTrack = (track: CaptionTrack): void => {
+		commands.push(addCaptionTrackCommand(store.mutate, track));
+	};
+
+	const removeCaptionTrack = (trackId: string): void => {
+		const track = findCaptionTrack(trackId);
+		if (!track) return;
+		commands.push(removeCaptionTrackCommand(store.mutate, trackId, track));
+	};
+
+	const addCaptionClip = (trackId: string, clip: CaptionClip): void => {
+		commands.push(addCaptionClipCommand(store.mutate, trackId, clip));
+	};
+
+	const removeCaptionClip = (trackId: string, clipId: string): void => {
+		const track = findCaptionTrack(trackId);
+		if (!track) return;
+		const clip = track.clips.find((c) => c.id === clipId);
+		if (!clip) return;
+		commands.push(removeCaptionClipCommand(store.mutate, trackId, clip));
+	};
+
 	const value: TimelineContextValue = {
 		name: () => props.name,
 		duration: () => props.duration,
@@ -98,6 +132,14 @@ export const TimelineProvider = (props: TimelineProviderProps): JSX.Element => {
 		moveAudioClip: store.moveAudioClip,
 		resizeAudioClipLeft: store.resizeAudioClipLeft,
 		resizeAudioClipRight: store.resizeAudioClipRight,
+		addCaptionTrack,
+		removeCaptionTrack,
+		addCaptionClip,
+		removeCaptionClip,
+		moveCaptionClip: store.moveCaptionClip,
+		resizeCaptionClipLeft: store.resizeCaptionClipLeft,
+		resizeCaptionClipRight: store.resizeCaptionClipRight,
+		setCaptionText: store.setCaptionText,
 		push: commands.push,
 		undo: commands.undo,
 		redo: commands.redo,

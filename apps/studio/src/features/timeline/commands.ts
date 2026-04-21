@@ -1,6 +1,9 @@
 import {
 	type AudioTrack,
+	type CaptionClip,
+	type CaptionTrack,
 	isAudioTrack,
+	isCaptionTrack,
 	isNumberTrack,
 	type Keyframe,
 	type Timeline,
@@ -25,6 +28,22 @@ const findAudioClip = (draft: Timeline, trackId: string, clipId: string) => {
 	if (!clip) return null;
 	return clip;
 };
+
+const findCaptionTrack = (draft: Timeline, trackId: string): CaptionTrack | null => {
+	const track = draft.tracks.find((t) => t.id === trackId);
+	return track && isCaptionTrack(track) ? track : null;
+};
+
+const findCaptionClip = (draft: Timeline, trackId: string, clipId: string): CaptionClip | null => {
+	const track = findCaptionTrack(draft, trackId);
+	if (!track) return null;
+	return track.clips.find((c) => c.id === clipId) ?? null;
+};
+
+const cloneCaptionTrack = (track: CaptionTrack): CaptionTrack => ({
+	...track,
+	clips: track.clips.map((c) => ({ ...c })),
+});
 
 export const moveClipCommand = (
 	mutate: Mutator,
@@ -280,6 +299,184 @@ export const resizeAudioClipRightCommand = (
 		label: "Trim audio clip right",
 		apply: () => set(nextEnd),
 		invert: () => set(prevEnd),
+	};
+};
+
+export const addCaptionTrackCommand = (mutate: Mutator, track: CaptionTrack): Command => {
+	const snapshot = cloneCaptionTrack(track);
+	const apply = (): void => {
+		mutate((draft) => {
+			if (draft.tracks.some((t) => t.id === snapshot.id)) return;
+			draft.tracks.push(cloneCaptionTrack(snapshot));
+		});
+	};
+	const invert = (): void => {
+		mutate((draft) => {
+			const idx = draft.tracks.findIndex((t) => t.id === snapshot.id);
+			if (idx < 0) return;
+			draft.tracks.splice(idx, 1);
+		});
+	};
+	return { label: "Add caption track", apply, invert };
+};
+
+export const removeCaptionTrackCommand = (
+	mutate: Mutator,
+	trackId: string,
+	captured: CaptionTrack,
+): Command => {
+	const snapshot = cloneCaptionTrack(captured);
+	const apply = (): void => {
+		mutate((draft) => {
+			const idx = draft.tracks.findIndex((t) => t.id === trackId);
+			if (idx < 0) return;
+			draft.tracks.splice(idx, 1);
+		});
+	};
+	const invert = (): void => {
+		mutate((draft) => {
+			if (draft.tracks.some((t) => t.id === trackId)) return;
+			draft.tracks.push(cloneCaptionTrack(snapshot));
+		});
+	};
+	return { label: "Remove caption track", apply, invert };
+};
+
+export const addCaptionClipCommand = (
+	mutate: Mutator,
+	trackId: string,
+	clip: CaptionClip,
+): Command => {
+	const snapshot: CaptionClip = { ...clip };
+	const apply = (): void => {
+		mutate((draft) => {
+			const track = findCaptionTrack(draft, trackId);
+			if (!track) return;
+			if (track.clips.some((c) => c.id === snapshot.id)) return;
+			track.clips.push({ ...snapshot });
+		});
+	};
+	const invert = (): void => {
+		mutate((draft) => {
+			const track = findCaptionTrack(draft, trackId);
+			if (!track) return;
+			const idx = track.clips.findIndex((c) => c.id === snapshot.id);
+			if (idx < 0) return;
+			track.clips.splice(idx, 1);
+		});
+	};
+	return { label: "Add caption", apply, invert };
+};
+
+export const removeCaptionClipCommand = (
+	mutate: Mutator,
+	trackId: string,
+	captured: CaptionClip,
+): Command => {
+	const snapshot: CaptionClip = { ...captured };
+	const apply = (): void => {
+		mutate((draft) => {
+			const track = findCaptionTrack(draft, trackId);
+			if (!track) return;
+			const idx = track.clips.findIndex((c) => c.id === snapshot.id);
+			if (idx < 0) return;
+			track.clips.splice(idx, 1);
+		});
+	};
+	const invert = (): void => {
+		mutate((draft) => {
+			const track = findCaptionTrack(draft, trackId);
+			if (!track) return;
+			if (track.clips.some((c) => c.id === snapshot.id)) return;
+			track.clips.push({ ...snapshot });
+		});
+	};
+	return { label: "Delete caption", apply, invert };
+};
+
+export const moveCaptionClipCommand = (
+	mutate: Mutator,
+	trackId: string,
+	clipId: string,
+	prevStart: number,
+	nextStart: number,
+): Command => {
+	const set = (start: number): void => {
+		mutate((draft) => {
+			const clip = findCaptionClip(draft, trackId, clipId);
+			if (!clip) return;
+			const duration = clip.end - clip.start;
+			clip.start = round(start);
+			clip.end = round(start + duration);
+		});
+	};
+	return {
+		label: "Move caption",
+		apply: () => set(nextStart),
+		invert: () => set(prevStart),
+	};
+};
+
+export const resizeCaptionClipLeftCommand = (
+	mutate: Mutator,
+	trackId: string,
+	clipId: string,
+	prevStart: number,
+	nextStart: number,
+): Command => {
+	const set = (start: number): void => {
+		mutate((draft) => {
+			const clip = findCaptionClip(draft, trackId, clipId);
+			if (!clip) return;
+			clip.start = round(start);
+		});
+	};
+	return {
+		label: "Trim caption left",
+		apply: () => set(nextStart),
+		invert: () => set(prevStart),
+	};
+};
+
+export const resizeCaptionClipRightCommand = (
+	mutate: Mutator,
+	trackId: string,
+	clipId: string,
+	prevEnd: number,
+	nextEnd: number,
+): Command => {
+	const set = (end: number): void => {
+		mutate((draft) => {
+			const clip = findCaptionClip(draft, trackId, clipId);
+			if (!clip) return;
+			clip.end = round(end);
+		});
+	};
+	return {
+		label: "Trim caption right",
+		apply: () => set(nextEnd),
+		invert: () => set(prevEnd),
+	};
+};
+
+export const setCaptionTextCommand = (
+	mutate: Mutator,
+	trackId: string,
+	clipId: string,
+	prevText: string,
+	nextText: string,
+): Command => {
+	const set = (text: string): void => {
+		mutate((draft) => {
+			const clip = findCaptionClip(draft, trackId, clipId);
+			if (!clip) return;
+			clip.text = text;
+		});
+	};
+	return {
+		label: "Edit caption text",
+		apply: () => set(nextText),
+		invert: () => set(prevText),
 	};
 };
 

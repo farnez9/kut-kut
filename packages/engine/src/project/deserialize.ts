@@ -126,6 +126,18 @@ const rehydrateTrack = (track: TrackJSON): Track => {
 			})),
 		};
 	}
+	if (track.kind === TrackKind.Caption) {
+		return {
+			id: track.id,
+			kind: track.kind,
+			clips: track.clips.map((clip) => ({
+				id: clip.id,
+				start: clip.start,
+				end: clip.end,
+				text: clip.text,
+			})),
+		};
+	}
 	return {
 		id: track.id,
 		kind: track.kind,

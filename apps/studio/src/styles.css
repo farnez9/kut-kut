@@ -540,6 +540,43 @@ button:focus-visible {
 	pointer-events: none;
 }
 
+/* ───── caption overlay ───── */
+
+.caption-overlay {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 48px;
+	display: flex;
+	justify-content: center;
+	pointer-events: none;
+	z-index: 2;
+}
+
+.caption-overlay__box {
+	max-width: 80%;
+	padding: 8px 16px;
+	background: rgba(13, 13, 14, 0.72);
+	border: 1px solid rgba(100, 216, 203, 0.18);
+	border-radius: 4px;
+	backdrop-filter: blur(6px);
+	text-align: center;
+}
+
+.caption-overlay__line {
+	font-family: var(--font-sans);
+	font-size: 18px;
+	line-height: 1.35;
+	color: var(--paper);
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.caption-overlay__line + .caption-overlay__line {
+	margin-top: 4px;
+}
+
 /* ───── playback cluster ───── */
 
 .playback {
@@ -1262,6 +1299,86 @@ button:focus-visible {
 	display: block;
 	width: 100%;
 	height: 100%;
+}
+
+/* ───── caption track ───── */
+
+.tl-track-row--caption {
+	height: 36px;
+}
+
+.tl-caption-label {
+	gap: 6px;
+	overflow: visible;
+}
+
+.tl-caption-label__title {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tl-caption-lane {
+	cursor: text;
+}
+
+.tl-caption-clip {
+	position: absolute;
+	top: 4px;
+	bottom: 4px;
+	left: 0;
+	background: rgba(100, 216, 203, 0.08);
+	border: 1px solid rgba(100, 216, 203, 0.3);
+	border-radius: 2px;
+	cursor: grab;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	padding: 0 10px 0 8px;
+}
+
+.tl-caption-clip:active {
+	cursor: grabbing;
+}
+
+.tl-caption-clip:hover {
+	border-color: var(--hot);
+}
+
+.tl-caption-clip--selected {
+	border-color: var(--hot);
+	box-shadow: 0 0 0 1px var(--hot-soft);
+}
+
+.tl-caption-clip__text {
+	flex: 1;
+	min-width: 0;
+	font-size: 12px;
+	color: var(--paper);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	pointer-events: none;
+}
+
+.tl-caption-clip__text:empty::before,
+.tl-caption-clip__text:not(:has(*))[title=""] {
+	color: var(--paper-mute);
+}
+
+.tl-caption-clip__editor {
+	width: 100%;
+	height: 100%;
+	background: var(--ink-0);
+	color: var(--paper);
+	border: none;
+	outline: 1px solid var(--hot);
+	resize: none;
+	font: inherit;
+	font-size: 12px;
+	padding: 2px 6px;
+	box-sizing: border-box;
 }
 
 /* ───── timeline header actions ───── */

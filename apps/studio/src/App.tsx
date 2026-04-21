@@ -1,6 +1,6 @@
 import { ChevronDown } from "lucide-solid";
 import type { JSX } from "solid-js";
-import { createEffect, createSignal, on, Show, useContext } from "solid-js";
+import { createEffect, createSignal, on, onCleanup, Show, useContext } from "solid-js";
 import {
 	AudioPlayerHost,
 	AudioProvider,
@@ -16,7 +16,7 @@ import {
 	PlaybackProvider,
 	useGlobalPlaybackHotkeys,
 } from "./features/playback/index.ts";
-import { PreviewHost } from "./features/preview/index.ts";
+import { CaptionOverlay, PreviewHost, toggleCaptionVisibility } from "./features/preview/index.ts";
 import {
 	type ProjectBundle,
 	ProjectList,
@@ -26,6 +26,7 @@ import {
 import { RecordProvider, RecordToggle } from "./features/record/index.ts";
 import { TimelineContext } from "./features/timeline/context.ts";
 import {
+	CaptionTrackButtons,
 	TimelineImportButton,
 	TimelineImportError,
 	TimelineProvider,
@@ -190,6 +191,36 @@ const PlaybackHotkeys = (): JSX.Element => {
 	return null;
 };
 
+const PreviewCaptions = (): JSX.Element => {
+	const ctx = useContext(TimelineContext);
+	return (
+		<Show when={ctx}>
+			<CaptionOverlay />
+		</Show>
+	);
+};
+
+const isEditableTarget = (el: EventTarget | null): boolean => {
+	if (!(el instanceof Element)) return false;
+	if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) return true;
+	return el.matches?.('[contenteditable], [contenteditable="true"]') ?? false;
+};
+
+const CaptionHotkeys = (): JSX.Element => {
+	const onKeydown = (e: KeyboardEvent): void => {
+		if (e.metaKey || e.ctrlKey || e.altKey) return;
+		if (e.key !== "c" && e.key !== "C") return;
+		if (isEditableTarget(e.target)) return;
+		e.preventDefault();
+		toggleCaptionVisibility();
+	};
+	if (typeof window !== "undefined") {
+		window.addEventListener("keydown", onKeydown);
+		onCleanup(() => window.removeEventListener("keydown", onKeydown));
+	}
+	return null;
+};
+
 const UndoHotkeys = (): JSX.Element => {
 	useUndoHotkeys();
 	return null;
@@ -221,6 +252,7 @@ const TimelineHeaderActions = (props: {
 			<Show when={ctx && !props.collapsed}>
 				<TimelineImportButton />
 				<RecordButton />
+				<CaptionTrackButtons />
 				<CleanAssetsButton />
 			</Show>
 			<button
@@ -311,6 +343,7 @@ const Shell = (): JSX.Element => {
 
 			<section class="app-preview">
 				<PreviewContent />
+				<PreviewCaptions />
 				<div class="preview-frame" aria-hidden="true">
 					<span />
 				</div>
@@ -349,6 +382,7 @@ const Root = (): JSX.Element => {
 			{(b) => (
 				<PlaybackProvider duration={b.scene.meta.duration}>
 					<PlaybackHotkeys />
+					<CaptionHotkeys />
 					<CommandProvider>
 						<UndoHotkeys />
 						<RecordProvider>

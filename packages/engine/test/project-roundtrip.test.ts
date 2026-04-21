@@ -18,12 +18,15 @@ import {
 import {
 	createAudioClip,
 	createAudioTrack,
+	createCaptionClip,
+	createCaptionTrack,
 	createClip,
 	createKeyframe,
 	createTimeline,
 	createTrack,
 	EasingName,
 	isAudioTrack,
+	isCaptionTrack,
 	isNumberTrack,
 } from "../src/timeline/index.ts";
 
@@ -267,6 +270,43 @@ describe("project roundtrip", () => {
 		expect(track.clips[0]?.offset).toBe(0.25);
 		const second = serialize(rebuilt.scene, rebuilt.timeline);
 		expect(second).toEqual(first);
+	});
+
+	test("timeline with caption tracks roundtrips", () => {
+		const scene = buildFixtureScene();
+		const timeline = createTimeline({
+			tracks: [
+				createCaptionTrack({
+					id: "cap-1",
+					clips: [
+						createCaptionClip({ id: "cc-1", start: 0, end: 2, text: "hello" }),
+						createCaptionClip({ id: "cc-2", start: 2, end: 4, text: "world" }),
+					],
+				}),
+			],
+		});
+		const first = serialize(scene, timeline);
+		expect(first.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+		const rebuilt = deserialize(first);
+		expect(rebuilt.timeline.tracks).toHaveLength(1);
+		const track = rebuilt.timeline.tracks[0];
+		if (!track || !isCaptionTrack(track)) throw new Error("expected caption track");
+		expect(track.clips).toEqual([
+			{ id: "cc-1", start: 0, end: 2, text: "hello" },
+			{ id: "cc-2", start: 2, end: 4, text: "world" },
+		]);
+		const second = serialize(rebuilt.scene, rebuilt.timeline);
+		expect(second).toEqual(first);
+	});
+
+	test("schemaVersion 2 projects migrate forward cleanly", () => {
+		const scene = buildFixtureScene();
+		const v3 = serialize(scene, buildFixtureTimeline());
+		const v2 = { ...v3, schemaVersion: 2 };
+		const rebuilt = deserialize(v2);
+		const reserialized = serialize(rebuilt.scene, rebuilt.timeline);
+		expect(reserialized.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+		expect(reserialized.timeline).toEqual(v3.timeline);
 	});
 
 	test("audio clip payloads validate required fields", () => {

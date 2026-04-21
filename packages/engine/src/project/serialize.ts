@@ -12,7 +12,7 @@ import {
 	TransformKind,
 } from "../scene/transform.ts";
 import { createTimeline } from "../timeline/factories.ts";
-import { isAudioTrack, type Timeline, type Track } from "../timeline/types.ts";
+import { isAudioTrack, isCaptionTrack, type Timeline, type Track } from "../timeline/types.ts";
 import type {
 	BoxJSON,
 	GroupJSON,
@@ -126,6 +126,18 @@ const serializeTrack = (track: Track): TrackJSON => {
 				offset: clip.offset,
 				gain: clip.gain,
 				muted: clip.muted,
+			})),
+		};
+	}
+	if (isCaptionTrack(track)) {
+		return {
+			id: track.id,
+			kind: track.kind,
+			clips: track.clips.map((clip) => ({
+				id: clip.id,
+				start: clip.start,
+				end: clip.end,
+				text: clip.text,
 			})),
 		};
 	}

@@ -1,5 +1,5 @@
 import { easings } from "./easing.ts";
-import type { Clip, NumberTrack } from "./types.ts";
+import type { CaptionClip, CaptionTrack, Clip, NumberTrack } from "./types.ts";
 
 export const evaluateClip = (clip: Clip<number>, timeInClip: number): number | undefined => {
 	const { keyframes } = clip;
@@ -29,4 +29,16 @@ export const evaluateTrack = (track: NumberTrack, sceneTime: number): number | u
 		const value = evaluateClip(clip, sceneTime - clip.start);
 		if (value !== undefined) return value;
 	}
+};
+
+export const evaluateCaptionTrack = (
+	track: CaptionTrack,
+	sceneTime: number,
+): CaptionClip | undefined => {
+	let match: CaptionClip | undefined;
+	for (const clip of track.clips) {
+		if (sceneTime < clip.start || sceneTime >= clip.end) continue;
+		if (!match || clip.start > match.start) match = clip;
+	}
+	return match;
 };

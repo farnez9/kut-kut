@@ -9,6 +9,8 @@ export {
 	type AudioClipJSON,
 	type AudioTrackJSON,
 	type BoxJSON,
+	type CaptionClipJSON,
+	type CaptionTrackJSON,
 	CURRENT_SCHEMA_VERSION,
 	type GroupJSON,
 	type Layer2DJSON,

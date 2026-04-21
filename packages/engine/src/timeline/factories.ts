@@ -2,6 +2,8 @@ import { EasingName } from "./easing.ts";
 import {
 	type AudioClip,
 	type AudioTrack,
+	type CaptionClip,
+	type CaptionTrack,
 	type Clip,
 	type Keyframe,
 	type NumberTrack,
@@ -94,6 +96,36 @@ export const createAudioTrack = (options: CreateAudioTrackOptions = {}): AudioTr
 	clips: options.clips ?? [],
 	gain: options.gain ?? 1,
 	muted: options.muted ?? false,
+});
+
+export type CreateCaptionClipOptions = {
+	id?: string;
+	start: number;
+	end: number;
+	text?: string;
+};
+
+export const createCaptionClip = (options: CreateCaptionClipOptions): CaptionClip => {
+	if (options.end < options.start) {
+		throw new Error(`CaptionClip end (${options.end}) precedes start (${options.start})`);
+	}
+	return {
+		id: options.id ?? crypto.randomUUID(),
+		start: options.start,
+		end: options.end,
+		text: options.text ?? "",
+	};
+};
+
+export type CreateCaptionTrackOptions = {
+	id?: string;
+	clips?: CaptionClip[];
+};
+
+export const createCaptionTrack = (options: CreateCaptionTrackOptions = {}): CaptionTrack => ({
+	id: options.id ?? crypto.randomUUID(),
+	kind: TrackKind.Caption,
+	clips: options.clips ?? [],
 });
 
 export type CreateTimelineOptions = {
