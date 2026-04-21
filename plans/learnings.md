@@ -23,3 +23,13 @@ Keep entries tight — if the fix is captured elsewhere (an ADR, a feature `CLAU
 
 **Mistake:** Assumed `createEffect(() => applyNodeOps(scene, overlay))` would propagate structural scene changes into the compositor. Pixi/Three layer renderers iterate `layer.children` exactly once at mount; later mutations are invisible.
 **Fix:** Structural overlay changes require a remount. The overlay feature exposes a `structureKey` memo and `<KeyedPreviewHost>` keys a `<Show>` on it. Don't mutate the shared authored scene — keep a scene **factory** on the bundle and rebuild via `factory() + applyNodeOps + applyOverlay` per change.
+
+## 2026-04-20 — Vite `/@fs/` returns SPA HTML for unknown binary extensions
+
+**Mistake:** Fetching `assets/<file>.mp3` via `/@fs/…` returned the index.html SPA fallback, and `decodeAudioData` then threw on "not valid audio". Vite only serves extensions it recognises as assets; audio MIME types aren't in the default list.
+**Fix:** Extend `assetsInclude` in `apps/studio/vite.config.ts` for every binary we fetch through `/@fs/` (`mp3`, `wav`, `ogg`, `oga`, `opus`, `m4a`, `aac`, `flac`, `webm`). Add future binary types (video, fonts) the same way instead of routing through a bespoke plugin endpoint.
+
+## 2026-04-20 — Busboy `close` races the file-write `finish`
+
+**Mistake:** The upload handler flipped a `wrote = true` flag inside the write-stream's `finish` callback and used `busboy.on("close")` to 400 with "no file field" when the flag was still false. Busboy's `close` fires as soon as the request body is drained — often before the disk write completes — so valid uploads sporadically got a 400 while the bytes landed on disk.
+**Fix:** Track field presence (`sawFile = true`) at the moment the `file` event fires, not at write completion. The `close` handler only uses that flag to distinguish "client sent no file field at all" from "we handled a file". Response for a successful write still comes from the stream's `finish` handler via the single-shot `respond()` guard.
