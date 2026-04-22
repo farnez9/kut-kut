@@ -1,4 +1,4 @@
-import type { NodeKind, OverrideValue } from "@kut-kut/engine";
+import type { MetaOverride, NodeKind, OverrideValue } from "@kut-kut/engine";
 import type { Command } from "../../lib/commands/index.ts";
 import { sameNodePath } from "./context.ts";
 import type { OverlayMutator } from "./store.ts";
@@ -119,4 +119,31 @@ export const restoreNodeCommand = (mutate: OverlayMutator, path: string[]): Comm
 		});
 	};
 	return { label: "Restore node", apply, invert };
+};
+
+const cloneMeta = (meta: MetaOverride | undefined): MetaOverride | undefined =>
+	meta ? { ...meta } : undefined;
+
+const writeMeta = (mutate: OverlayMutator, next: MetaOverride | undefined): void => {
+	mutate((draft) => {
+		if (next === undefined || Object.keys(next).length === 0) {
+			delete draft.meta;
+			return;
+		}
+		draft.meta = { ...next };
+	});
+};
+
+export const setOverlayMetaCommand = (
+	mutate: OverlayMutator,
+	prev: MetaOverride | undefined,
+	next: MetaOverride | undefined,
+): Command => {
+	const prevSnap = cloneMeta(prev);
+	const nextSnap = cloneMeta(next);
+	return {
+		label: "Set scene meta",
+		apply: () => writeMeta(mutate, nextSnap),
+		invert: () => writeMeta(mutate, prevSnap),
+	};
 };

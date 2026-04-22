@@ -1,6 +1,6 @@
 # Kut-Kut — overview
 
-**Last updated:** 2026-04-22 (session 18 shipped)
+**Last updated:** 2026-04-23 (session 19 shipped)
 
 ## Product
 
@@ -23,7 +23,9 @@ A general-purpose, local-first authoring tool for 2D and 3D animated videos. You
 
 **Export.** Engine `export/` orchestrates a frame-stepped render: `LayerRenderer.renderFrame()` forces sync draws on Pixi + Three, `Compositor.composite(output)` z-orders layer canvases onto one output canvas per frame, `exportVideo({scene, timeline, overlay, audioTracks, audioBuffers, compositor, signal, onProgress})` feeds `VideoFrame`s to `VideoEncoder` (H.264 `avc1.640028`, 8 Mbps, 2s GOP) in parallel with `mixTimelineAudio` (OfflineAudioContext → planar f32 → AudioEncoder, AAC-LC 128 kbps 48 kHz stereo), muxed via `mp4-muxer` with `ArrayBufferTarget` + `fastStart: "in-memory"`, returns a `Blob`. Back-pressure via `encodeQueueSize` polling (maxQueue 4 video / 8 audio); cancellation polled per frame + audio chunk via `AbortSignal`. Studio `features/export/`: `<ExportButton>` in topbar, `<ExportDialog>` mounts its own offscreen compositor (so live preview keeps running), shows scene meta + progress bar + Cancel, feature-detects `VideoEncoder`/`AudioEncoder` with a banner, downloads via anchor click as `<project-slug>-<YYYYMMDD-HHmm>.mp4`.
 	
-**Next session:** 19 — Short-form vertical mode + aspect presets (16:9 / 9:16 / 1:1, safe-zone guides, per-aspect export configs).
+**Aspect presets.** Overlay schema v3 adds an optional `meta?` field; `applyOverlayMeta` shallow-merges it onto `scene.meta` inside `OverlayProvider.scene()` and at the top of `exportVideo`. Studio `<AspectPresetToggle>` in the topbar commits `setOverlayMetaCommand` (routed through the unified command store, undoable + persisted in `overlay.json`) for 16:9 / 9:16 / 1:1. `PreviewStageHost` letterbox-scaffolds the preview with live `aspect-ratio` (best-effort — the host doesn't fully narrow in portrait inside the flex cell; deferred).
+
+**Next session:** 20 — Code-first scene authoring polish (`scene.ts` conventions + helpers, HMR story for scene edits, starter examples).
 
 ## Architecture
 
@@ -66,7 +68,7 @@ See `plans/decisions/0001-architecture-choices.md` for locked decisions. Key spl
 | 16  | Captions                              | Caption track type, editor bound to timeline/audio track, 2D text overlay, SRT/VTT import/export |
 | 17  | TTS: adapters + panel                 | Provider iface, Kokoro (in-browser) adapter, studio panel with warm-up progress, idempotent audio scheduler |
 | 18  | Engine: export pipeline               | WebCodecs video + audio encode, mp4-muxer, progress/cancel, browser download, export dialog |
-| 19  | Short-form vertical mode + aspects    | 16:9 / 9:16 / 1:1 presets, safe-zone guides, per-aspect export configs |
+| 19  | Short-form vertical mode + aspects    | 16:9 / 9:16 / 1:1 presets via overlay meta, export picks up scene dimensions |
 | 20  | Code-first scene authoring polish     | `scene.ts` conventions + helpers, HMR story for scene edits, starter examples |
 | 21+ | Polish + publish prep                 | Shortcuts, a11y, perf profiling, docs, engine publish prep |
 
@@ -92,6 +94,7 @@ One line per completed session — the canonical "what exists". Append at sessio
 - **16** (2026-04-21) Captions: engine `CaptionTrack`/`CaptionClip` + schema v3 migration, pure SRT/VTT parse+serialize (tolerates BOM/CRLF/`,`·`.`/VTT preamble), timeline caption row with drag/trim/inline textarea editor and Add·Import·Export SRT·VTT header buttons, DOM `<CaptionOverlay>` in the preview with global `C` hotkey.
 - **17** (2026-04-22) TTS: engine `TtsProvider` iface + `createKokoroProvider` (in-browser via `kokoro-js`, lazy ONNX model load with `warmUp(onProgress)`, `floatPcmToWav` helper); studio `<TtsButton>`/`<TtsPanel>` with cold→loading→ready warm-up state, Generate routes through the now-public shared `ingestAudioFile` tail; shared `extensionForMime` hoisted to `features/audio/mime.ts`. Hardened `createAudioPlayer.reconcile()` to be idempotent (active sources keyed by `clip.id`; force-restart only on seek / state transition; gain-only updates stay on the `GainNode`) — fixes metallic/bassy artefact on timeline playback of generated and recorded clips.
 - **18** (2026-04-22) Export pipeline: engine `export/` with `mixTimelineAudio` (OfflineAudioContext), `encodeVideoStream`/`encodeAudioStream` back-pressured WebCodecs helpers, `exportVideo` top-level orchestrator muxing via `mp4-muxer` to a `Blob`; `LayerRenderer.renderFrame()` + `Compositor.composite(output)` added for frame-stepped compositing; studio `<ExportButton>` + `<ExportDialog>` (offscreen compositor, progress + cancel, feature-detect banner, timestamped filename).
+- **19** (2026-04-23) Aspect presets: overlay schema v3 with optional `meta?` (width/height/fps/duration), pure `applyOverlayMeta` called from `OverlayProvider.scene()` + top of `exportVideo`, studio `<AspectPresetToggle>` in topbar with `setOverlayMetaCommand` (undoable, persisted). Preview letterbox scaffolded via inline `aspect-ratio` on `PreviewStageHost` — visual fit imperfect in portrait/square (deferred). Safe-zone overlay implemented then removed pre-commit.
 
 ## Performance & memory budgets
 

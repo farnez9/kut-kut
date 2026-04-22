@@ -1,6 +1,7 @@
 import { ChevronDown } from "lucide-solid";
 import type { JSX } from "solid-js";
 import { createEffect, createSignal, on, onCleanup, Show, useContext } from "solid-js";
+import { AspectPresetToggle } from "./features/aspect/index.ts";
 import {
 	AudioPlayerHost,
 	AudioProvider,
@@ -11,7 +12,7 @@ import {
 import { ExportButton } from "./features/export/index.ts";
 import { Inspector, InspectorHint } from "./features/inspector/index.ts";
 import { LayersPanel } from "./features/layers/index.ts";
-import { OverlayProvider, useOverlay } from "./features/overlay/index.ts";
+import { OverlayContext, OverlayProvider, useOverlay } from "./features/overlay/index.ts";
 import { PlaybackContext } from "./features/playback/context.ts";
 import {
 	PlaybackControls,
@@ -19,18 +20,12 @@ import {
 	useGlobalPlaybackHotkeys,
 } from "./features/playback/index.ts";
 import { CaptionOverlay, PreviewHost, toggleCaptionVisibility } from "./features/preview/index.ts";
-import {
-	type ProjectBundle,
-	ProjectList,
-	ProjectProvider,
-	useProject,
-} from "./features/project/index.ts";
+import { ProjectList, ProjectProvider, useProject } from "./features/project/index.ts";
 import { RecordProvider, RecordToggle } from "./features/record/index.ts";
 import { TimelineContext } from "./features/timeline/context.ts";
 import {
 	CaptionTrackButtons,
 	TimelineImportButton,
-	TimelineImportError,
 	TimelineProvider,
 	TimelineResizer,
 	TimelineView,
@@ -67,12 +62,15 @@ const Wordmark = (): JSX.Element => (
 
 const TopbarRight = (): JSX.Element => {
 	const project = useProject();
+	const overlayCtx = useContext(OverlayContext);
+	const fps = (): number | null => overlayCtx?.scene().meta.fps ?? null;
 	return (
 		<div class="topbar-right">
+			<AspectPresetToggle />
 			<span class="label">Scene</span>
 			<span class="label label--hot">
 				<Show when={project.bundle()} keyed fallback="—">
-					{(b) => `${b.name} · ${b.scene.meta.fps} fps`}
+					{(b) => `${b.name}${fps() !== null ? ` · ${fps()} fps` : ""}`}
 				</Show>
 			</span>
 			<ExportButton />
@@ -150,6 +148,36 @@ const PreviewContent = (): JSX.Element => {
 	);
 };
 
+const PreviewStageHost = (): JSX.Element => {
+	const overlayCtx = useContext(OverlayContext);
+	return (
+		<Show
+			when={overlayCtx}
+			fallback={
+				<div class="preview-stage-host">
+					<PreviewContent />
+				</div>
+			}
+		>
+			{(ctx) => {
+				const aspect = (): string => {
+					const { width, height } = ctx().scene().meta;
+					return `${width} / ${height}`;
+				};
+				return (
+					<div class="preview-stage-host" style={{ "aspect-ratio": aspect() }}>
+						<PreviewContent />
+						<PreviewCaptions />
+						<div class="preview-frame" aria-hidden="true">
+							<span />
+						</div>
+					</div>
+				);
+			}}
+		</Show>
+	);
+};
+
 type PreviewMessageProps = { label: string; detail?: string; retry?: boolean };
 
 const PreviewMessage = (props: PreviewMessageProps): JSX.Element => {
@@ -170,20 +198,22 @@ const PreviewMessage = (props: PreviewMessageProps): JSX.Element => {
 };
 
 const PreviewAspect = (): JSX.Element => {
-	const project = useProject();
+	const overlayCtx = useContext(OverlayContext);
 	return (
-		<Show when={project.bundle()} keyed>
-			{(b) => (
-				<div class="preview-aspect" aria-hidden="true">
-					{`${aspectLabel(b)} · ${b.scene.meta.width}×${b.scene.meta.height}`}
-				</div>
-			)}
+		<Show when={overlayCtx}>
+			{(ctx) => {
+				const meta = (): { width: number; height: number } => ctx().scene().meta;
+				return (
+					<div class="preview-aspect" aria-hidden="true">
+						{`${aspectLabel(meta().width, meta().height)} · ${meta().width}×${meta().height}`}
+					</div>
+				);
+			}}
 		</Show>
 	);
 };
 
-const aspectLabel = (b: ProjectBundle): string => {
-	const { width, height } = b.scene.meta;
+const aspectLabel = (width: number, height: number): string => {
 	const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
 	const d = gcd(width, height);
 	return `${width / d}:${height / d}`;
@@ -346,11 +376,7 @@ const Shell = (): JSX.Element => {
 			</aside>
 
 			<section class="app-preview">
-				<PreviewContent />
-				<PreviewCaptions />
-				<div class="preview-frame" aria-hidden="true">
-					<span />
-				</div>
+				<PreviewStageHost />
 				<PreviewMeta />
 				<PreviewAspect />
 			</section>

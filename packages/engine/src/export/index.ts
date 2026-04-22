@@ -1,6 +1,6 @@
 import { ArrayBufferTarget, Muxer } from "mp4-muxer";
 import type { AudioBufferLike } from "../audio/peaks.ts";
-import { applyOverlay } from "../overlay/apply.ts";
+import { applyOverlay, applyOverlayMeta } from "../overlay/apply.ts";
 import type { Overlay } from "../overlay/schema.ts";
 import type { Compositor } from "../render/compositor.ts";
 import type { Scene } from "../scene/scene.ts";
@@ -119,6 +119,7 @@ export const exportVideo = async (options: ExportVideoOptions): Promise<Blob> =>
 		throw new Error("exportVideo: VideoEncoder is not supported in this browser");
 	}
 	const { scene, compositor } = options;
+	if (options.overlay) applyOverlayMeta(scene, options.overlay);
 	const { width, height, fps, duration } = scene.meta;
 	const totalFrames = Math.max(1, Math.round(duration * fps));
 	const gopSize = Math.max(1, Math.round(fps * 2));

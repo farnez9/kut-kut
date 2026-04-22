@@ -1,4 +1,4 @@
-import type { NodeKind, Overlay, OverrideValue, Scene } from "@kut-kut/engine";
+import type { MetaOverride, NodeKind, Overlay, OverrideValue, Scene } from "@kut-kut/engine";
 import { type Accessor, createContext, useContext } from "solid-js";
 import type { Store } from "solid-js/store";
 
@@ -21,6 +21,7 @@ export type OverlayContextValue = {
 	deleteNode: (path: string[]) => void;
 	restoreNode: (path: string[]) => void;
 	isDeleted: (path: string[]) => boolean;
+	setSceneMeta: (patch: MetaOverride) => void;
 	structureKey: Accessor<string>;
 	saveState: Accessor<OverlaySaveState>;
 	saveError: Accessor<Error | null>;

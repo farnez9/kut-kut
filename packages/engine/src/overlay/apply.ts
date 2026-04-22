@@ -25,3 +25,12 @@ export const applyOverlay = (scene: Scene, overlay: Overlay): void => {
 		applyOverride(scene, override);
 	}
 };
+
+export const applyOverlayMeta = (scene: Scene, overlay: Overlay): void => {
+	const meta = overlay.meta;
+	if (!meta) return;
+	if (meta.width !== undefined) scene.meta.width = meta.width;
+	if (meta.height !== undefined) scene.meta.height = meta.height;
+	if (meta.fps !== undefined) scene.meta.fps = meta.fps;
+	if (meta.duration !== undefined) scene.meta.duration = meta.duration;
+};

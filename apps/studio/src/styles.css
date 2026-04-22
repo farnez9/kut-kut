@@ -208,6 +208,16 @@ button:focus-visible {
 	background: #000;
 	position: relative;
 	overflow: hidden;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.preview-stage-host {
+	position: relative;
+	aspect-ratio: 16 / 9;
+	width: 100%;
+	max-height: 100%;
 }
 
 /* ───── wordmark ───── */
@@ -734,6 +744,42 @@ button:focus-visible {
 
 .topbar-right .label {
 	color: var(--paper-ghost);
+}
+
+/* ───── aspect preset toggle ───── */
+
+.aspect-toggle {
+	display: inline-flex;
+	align-items: center;
+	border: 1px solid var(--rule);
+	border-radius: 2px;
+	overflow: hidden;
+	background: var(--ink-0);
+}
+
+.aspect-toggle__btn {
+	padding: 2px 8px;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	letter-spacing: 0.08em;
+	color: var(--paper-dim);
+	background: transparent;
+	border: none;
+	border-right: 1px solid var(--rule);
+	cursor: pointer;
+}
+
+.aspect-toggle__btn:last-child {
+	border-right: none;
+}
+
+.aspect-toggle__btn:hover {
+	color: var(--hot);
+}
+
+.aspect-toggle__btn--on {
+	color: var(--hot);
+	background: color-mix(in oklab, var(--hot) 10%, var(--ink-0));
 }
 
 /* ───── interactive timeline ───── */

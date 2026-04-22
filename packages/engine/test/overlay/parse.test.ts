@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { CURRENT_OVERLAY_VERSION, emptyOverlay, parseOverlay } from "../../src/overlay/index.ts";
 
 describe("parseOverlay", () => {
-	test("accepts an empty v2 document", () => {
+	test("accepts an empty document at the current version", () => {
 		const parsed = parseOverlay(emptyOverlay());
 		expect(parsed).toEqual({
 			schemaVersion: CURRENT_OVERLAY_VERSION,
@@ -10,6 +10,29 @@ describe("parseOverlay", () => {
 			additions: [],
 			deletions: [],
 		});
+	});
+
+	test("accepts a meta override with partial fields", () => {
+		const parsed = parseOverlay({
+			schemaVersion: CURRENT_OVERLAY_VERSION,
+			overrides: [],
+			additions: [],
+			deletions: [],
+			meta: { width: 1080, height: 1920 },
+		});
+		expect(parsed.meta).toEqual({ width: 1080, height: 1920 });
+	});
+
+	test("rejects a non-number meta field", () => {
+		expect(() =>
+			parseOverlay({
+				schemaVersion: CURRENT_OVERLAY_VERSION,
+				overrides: [],
+				additions: [],
+				deletions: [],
+				meta: { width: "1080" },
+			}),
+		).toThrow();
 	});
 
 	test("accepts scalar and vec3 override values", () => {
@@ -49,6 +72,16 @@ describe("parseOverlay", () => {
 				deletions: [],
 			}),
 		).toThrow(/schemaVersion 99 not supported/);
+	});
+
+	test("migrates v2 overlays to the current version", () => {
+		const parsed = parseOverlay({
+			schemaVersion: 2,
+			overrides: [],
+			additions: [],
+			deletions: [],
+		});
+		expect(parsed.schemaVersion).toBe(CURRENT_OVERLAY_VERSION);
 	});
 
 	test("rejects a value that is neither number nor triple", () => {
@@ -107,7 +140,7 @@ describe("parseOverlay", () => {
 	});
 });
 
-describe("overlay migration (v1 → v2)", () => {
+describe("overlay migration (v1 → current)", () => {
 	test("fills additions and deletions with empty arrays", () => {
 		const parsed = parseOverlay({
 			schemaVersion: 1,
@@ -127,7 +160,19 @@ describe("overlay migration (v1 → v2)", () => {
 		expect(parsed.overrides[0]?.value).toEqual([1, 2, 3]);
 	});
 
-	test("is a no-op for v2 documents", () => {
+	test("v2 → v3 is identity (meta stays absent)", () => {
+		const parsed = parseOverlay({
+			schemaVersion: 2,
+			overrides: [],
+			additions: [{ parentPath: ["2D"], name: "A", kind: "rect" as const }],
+			deletions: [],
+		});
+		expect(parsed.schemaVersion).toBe(CURRENT_OVERLAY_VERSION);
+		expect(parsed.additions).toHaveLength(1);
+		expect(parsed.meta).toBeUndefined();
+	});
+
+	test("is a no-op for current-version documents", () => {
 		const input = {
 			schemaVersion: CURRENT_OVERLAY_VERSION,
 			overrides: [],

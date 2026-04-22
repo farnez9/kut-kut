@@ -1,9 +1,11 @@
-export { applyOverlay } from "./apply.ts";
+export { applyOverlay, applyOverlayMeta } from "./apply.ts";
 export { migrateOverlay } from "./migrations.ts";
 export { applyNodeOps } from "./node-ops.ts";
 export { deserializeOverlay, emptyOverlay, parseOverlay } from "./parse.ts";
 export {
 	CURRENT_OVERLAY_VERSION,
+	type MetaOverride,
+	MetaOverrideSchema,
 	type NodeAddition,
 	NodeAdditionSchema,
 	type NodeDeletion,

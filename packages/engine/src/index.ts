@@ -17,9 +17,11 @@ export {
 export {
 	applyNodeOps,
 	applyOverlay,
+	applyOverlayMeta,
 	CURRENT_OVERLAY_VERSION,
 	deserializeOverlay,
 	emptyOverlay,
+	type MetaOverride,
 	migrateOverlay,
 	type NodeAddition,
 	type NodeDeletion,

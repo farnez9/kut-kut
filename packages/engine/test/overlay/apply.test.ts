@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
 	applyOverlay,
+	applyOverlayMeta,
 	CURRENT_OVERLAY_VERSION,
 	emptyOverlay,
 	type Overlay,
@@ -117,6 +118,19 @@ describe("applyOverlay", () => {
 		expect(hero.transform.x.get()).toBe(10);
 	});
 
+	test("ignores meta override (handled separately by applyOverlayMeta)", () => {
+		const scene = build2DScene();
+		applyOverlay(scene, {
+			schemaVersion: CURRENT_OVERLAY_VERSION,
+			overrides: [],
+			additions: [],
+			deletions: [],
+			meta: { width: 1080, height: 1920 },
+		});
+		expect(scene.meta.width).toBe(100);
+		expect(scene.meta.height).toBe(100);
+	});
+
 	test("applies multiple overrides in order", () => {
 		const scene = build2DScene();
 		applyOverlay(
@@ -132,5 +146,45 @@ describe("applyOverlay", () => {
 		expect(hero.transform.x.get()).toBe(1);
 		expect(hero.transform.y.get()).toBe(2);
 		expect(hero.transform.opacity.get()).toBe(0.5);
+	});
+});
+
+describe("applyOverlayMeta", () => {
+	const metaOverlayWith = (meta: Overlay["meta"]): Overlay => ({
+		schemaVersion: CURRENT_OVERLAY_VERSION,
+		overrides: [],
+		additions: [],
+		deletions: [],
+		meta,
+	});
+
+	test("shallow-merges width and height", () => {
+		const scene = build2DScene();
+		applyOverlayMeta(scene, metaOverlayWith({ width: 1080, height: 1920 }));
+		expect(scene.meta.width).toBe(1080);
+		expect(scene.meta.height).toBe(1920);
+		expect(scene.meta.fps).toBe(30);
+		expect(scene.meta.duration).toBe(1);
+	});
+
+	test("leaves unspecified fields untouched", () => {
+		const scene = build2DScene();
+		applyOverlayMeta(scene, metaOverlayWith({ width: 1080 }));
+		expect(scene.meta.width).toBe(1080);
+		expect(scene.meta.height).toBe(100);
+	});
+
+	test("no-op when meta is absent", () => {
+		const scene = build2DScene();
+		applyOverlayMeta(scene, emptyOverlay());
+		expect(scene.meta.width).toBe(100);
+		expect(scene.meta.height).toBe(100);
+	});
+
+	test("merges fps and duration when provided", () => {
+		const scene = build2DScene();
+		applyOverlayMeta(scene, metaOverlayWith({ fps: 60, duration: 3 }));
+		expect(scene.meta.fps).toBe(60);
+		expect(scene.meta.duration).toBe(3);
 	});
 });
