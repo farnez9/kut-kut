@@ -1,16 +1,11 @@
+import { extensionForMime } from "./mime.ts";
+
 const MIME_PREFERENCES = [
 	"audio/webm;codecs=opus",
 	"audio/webm",
 	"audio/mp4;codecs=mp4a.40.2",
 	"audio/mp4",
 ] as const;
-
-const EXTENSION_BY_CONTAINER: ReadonlyArray<[RegExp, string]> = [
-	[/^audio\/webm/i, "webm"],
-	[/^audio\/mp4/i, "m4a"],
-	[/^audio\/ogg/i, "ogg"],
-	[/^audio\/wav/i, "wav"],
-];
 
 export const pickRecordingMime = (): string | null => {
 	if (typeof MediaRecorder === "undefined") return null;
@@ -20,12 +15,7 @@ export const pickRecordingMime = (): string | null => {
 	return null;
 };
 
-export const extensionForMime = (mime: string): string => {
-	for (const [pattern, ext] of EXTENSION_BY_CONTAINER) {
-		if (pattern.test(mime)) return ext;
-	}
-	return "bin";
-};
+export { extensionForMime };
 
 const pad = (n: number, width = 2): string => n.toString().padStart(width, "0");
 

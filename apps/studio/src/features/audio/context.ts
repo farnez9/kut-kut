@@ -12,6 +12,7 @@ export type AudioContextValue = {
 	peaks: Accessor<Map<string, Peaks>>;
 	decodeState: Accessor<Map<string, DecodeState>>;
 	importFile: (file: File) => Promise<void>;
+	ingestAudioFile: (file: File, startAt: number) => Promise<void>;
 	importState: Accessor<"idle" | "importing" | "error">;
 	importError: Accessor<Error | null>;
 	recordSupported: () => boolean;

@@ -10,3 +10,4 @@ export {
 	useAudio,
 } from "./context.ts";
 export { RecordButton, RecordError } from "./RecordButton.tsx";
+export { TtsButton } from "./tts/TtsButton.tsx";

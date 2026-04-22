@@ -157,4 +157,15 @@ export {
 	type TrackTargetById,
 	type TrackTargetByPath,
 } from "./timeline/index.ts";
+export {
+	createKokoroProvider,
+	floatPcmToWav,
+	type KokoroOptions,
+	type TtsPreviewOptions,
+	type TtsProvider,
+	type TtsRequest,
+	type TtsResult,
+	type TtsVoice,
+	type TtsWarmUpProgress,
+} from "./tts/index.ts";
 export { VERSION } from "./version.ts";

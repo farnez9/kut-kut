@@ -24,5 +24,8 @@ export default defineConfig({
 		"**/*.flac",
 		"**/*.webm",
 	],
+	optimizeDeps: {
+		exclude: ["kokoro-js", "@huggingface/transformers"],
+	},
 	plugins: [solid(), projectFsPlugin()],
 });

@@ -50,12 +50,12 @@ New engine track kind + a studio row. Captions are **their own track type**, pee
 
 ## Tasks
 
-1. [ ] **Engine caption types + schema v3.** Add `CaptionClip`/`CaptionTrack` to `timeline/types.ts`, `TrackKind.Caption`, `isCaptionTrack`. Factories in `factories.ts`. Pure `evaluateCaptionTrack` in `evaluate.ts`. Valibot schemas + `migrateV2ToV3` in `project/`. Export from public `index.ts`. Tests: factory defaults, evaluator at boundaries + overlap tie-break, migration idempotence.
-2. [ ] **SRT/VTT parse + serialize.** New `packages/engine/src/captions/parse.ts` (or `srt.ts` + `vtt.ts` split). Pure functions + unit tests covering BOM, CRLF, multi-line cues, VTT preamble/NOTE stripping, SRT `,` vs VTT `.` fraction, roundtrip.
-3. [ ] **Studio raw setters + caption commands.** Extend `TimelineContext` with the caption mutation API. Add the 8 caption commands in `commands.ts`. Unit-test at least `moveCaptionClipCommand` and `setCaptionTextCommand` (idempotent re-apply).
-4. [ ] **Caption row UI.** `CaptionTrackRow.tsx` + styles — body drag, left/right trim wired to raw setters during drag with command push on `pointerup`, double-click → `<textarea>` inline editor that commits on blur/Enter (Shift+Enter = newline), Esc cancels. Selection + delete (`Backspace` on selected clip).
-5. [ ] **Preview caption overlay.** `<CaptionOverlay>` inside `PreviewHost`. Reads timeline caption tracks + `playback.time()`, shows the active clip's text with session-consistent styling. No layout shift on empty state.
-6. [ ] **Track + file-format buttons.** Timeline header buttons for "Add captions", "Import SRT/VTT", "Export SRT/VTT". Import parses + pushes a single `addCaptionTrackCommand`. Export serializes the first caption track; if none present, button is disabled. Hotkey `C` toggles caption-overlay visibility on the preview (dev convenience).
+1. [x] **Engine caption types + schema v3.** Add `CaptionClip`/`CaptionTrack` to `timeline/types.ts`, `TrackKind.Caption`, `isCaptionTrack`. Factories in `factories.ts`. Pure `evaluateCaptionTrack` in `evaluate.ts`. Valibot schemas + `migrateV2ToV3` in `project/`. Export from public `index.ts`. Tests: factory defaults, evaluator at boundaries + overlap tie-break, migration idempotence.
+2. [x] **SRT/VTT parse + serialize.** New `packages/engine/src/captions/parse.ts` (or `srt.ts` + `vtt.ts` split). Pure functions + unit tests covering BOM, CRLF, multi-line cues, VTT preamble/NOTE stripping, SRT `,` vs VTT `.` fraction, roundtrip.
+3. [x] **Studio raw setters + caption commands.** Extend `TimelineContext` with the caption mutation API. Add the 8 caption commands in `commands.ts`. Unit-test at least `moveCaptionClipCommand` and `setCaptionTextCommand` (idempotent re-apply).
+4. [x] **Caption row UI.** `CaptionTrackRow.tsx` + styles — body drag, left/right trim wired to raw setters during drag with command push on `pointerup`, double-click → `<textarea>` inline editor that commits on blur/Enter (Shift+Enter = newline), Esc cancels. Selection + delete (`Backspace` on selected clip).
+5. [x] **Preview caption overlay.** `<CaptionOverlay>` inside `PreviewHost`. Reads timeline caption tracks + `playback.time()`, shows the active clip's text with session-consistent styling. No layout shift on empty state.
+6. [x] **Track + file-format buttons.** Timeline header buttons for "Add captions", "Import SRT/VTT", "Export SRT/VTT". Import parses + pushes a single `addCaptionTrackCommand`. Export serializes the first caption track; if none present, button is disabled. Hotkey `C` toggles caption-overlay visibility on the preview (dev convenience).
 
 ## Non-goals
 

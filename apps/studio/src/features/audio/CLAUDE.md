@@ -11,6 +11,7 @@ See ADR 0009 (audio model, engine scheduler) and ADR 0010 (studio wiring).
   - `peaks()` — `Map<string, Peaks>` keyed the same way.
   - `decodeState()` — `Map<string, "pending" | "ready" | "error">`.
   - `importFile(file)` — upload via plugin → decode → peaks → `addAudioTrackCommand`.
+  - `ingestAudioFile(file, startAt)` — same shared tail as recording/TTS; upload + decode + add track with `clip.start = startAt`. Public so the TTS panel can land generated audio at the current playback time.
   - `importState()` / `importError()` — surfaced by the timeline's import error banner.
   - `recordSupported()` — `MediaRecorder` + `getUserMedia` feature detect.
   - `startRecording()` / `stopRecording()` / `cancelRecording()` — mic capture wired to live playback.

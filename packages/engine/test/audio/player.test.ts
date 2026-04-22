@@ -400,6 +400,116 @@ describe("createAudioPlayer", () => {
 			dispose();
 		}));
 
+	test("repeated reconcile() during steady-state playback does not restart sources", () =>
+		createRoot((dispose) => {
+			const playback = createPlaybackController({
+				duration: 10,
+				now: h.now,
+				scheduler: h.scheduler,
+			});
+			const [tracks] = createSignal<Track[]>([
+				createAudioTrack({
+					id: "T",
+					clips: [createAudioClip({ src: "a.mp3", start: 0, end: 5 })],
+				}),
+			]);
+			const [buffers] = createSignal(new Map([["a.mp3", fakeBuffer("a")]]));
+			const player = createAudioPlayer({
+				context: ctx as unknown as AudioContext,
+				tracks,
+				buffers,
+				playback,
+			});
+			playback.play();
+			expect(ctx.createdSources.length).toBe(1);
+			const firstSource = ctx.createdSources[0];
+			const startCount = firstSource?.started.length ?? 0;
+			const stopCount = firstSource?.stopped.length ?? 0;
+			for (let i = 0; i < 50; i++) player.reconcile();
+			expect(ctx.createdSources.length).toBe(1);
+			expect(firstSource?.started.length ?? 0).toBe(startCount);
+			expect(firstSource?.stopped.length ?? 0).toBe(stopCount);
+			player.dispose();
+			playback.dispose();
+			dispose();
+		}));
+
+	test("clip removed mid-playback prunes its source without a seek", () =>
+		createRoot((dispose) => {
+			const playback = createPlaybackController({
+				duration: 10,
+				now: h.now,
+				scheduler: h.scheduler,
+			});
+			const clipA = createAudioClip({ src: "a.mp3", start: 0, end: 4 });
+			const [tracks, setTracks] = createSignal<Track[]>([
+				createAudioTrack({ id: "T", clips: [clipA] }),
+			]);
+			const [buffers] = createSignal(new Map([["a.mp3", fakeBuffer("a")]]));
+			const player = createAudioPlayer({
+				context: ctx as unknown as AudioContext,
+				tracks,
+				buffers,
+				playback,
+			});
+			playback.play();
+			expect(ctx.createdSources.length).toBe(1);
+			const firstSource = ctx.createdSources[0];
+			const startsBefore = firstSource?.started.length ?? 0;
+
+			setTracks([createAudioTrack({ id: "T", clips: [] })]);
+			player.reconcile();
+
+			expect(firstSource?.stopped.length ?? 0).toBeGreaterThan(0);
+			expect(ctx.createdSources.length).toBe(1);
+			expect(firstSource?.started.length ?? 0).toBe(startsBefore);
+			player.dispose();
+			playback.dispose();
+			dispose();
+		}));
+
+	test("non-transition gain change updates the clip gain node without restarting the source", () =>
+		createRoot((dispose) => {
+			const playback = createPlaybackController({
+				duration: 10,
+				now: h.now,
+				scheduler: h.scheduler,
+			});
+			const [tracks, setTracks] = createSignal<Track[]>([
+				createAudioTrack({
+					id: "T",
+					gain: 1,
+					clips: [createAudioClip({ src: "a.mp3", start: 0, end: 5, gain: 0.8 })],
+				}),
+			]);
+			const [buffers] = createSignal(new Map([["a.mp3", fakeBuffer("a")]]));
+			const player = createAudioPlayer({
+				context: ctx as unknown as AudioContext,
+				tracks,
+				buffers,
+				playback,
+			});
+			playback.play();
+			expect(ctx.createdSources.length).toBe(1);
+			const firstSource = ctx.createdSources[0];
+			const trackGain = ctx.createdGains[0];
+			const startCount = firstSource?.started.length ?? 0;
+			const stopCount = firstSource?.stopped.length ?? 0;
+
+			const current = tracks()[0];
+			if (current === undefined || current.kind !== "audio") throw new Error("track");
+			setTracks([{ ...current, gain: 0.25 }]);
+			player.reconcile();
+
+			expect(ctx.createdSources.length).toBe(1);
+			expect(firstSource?.started.length ?? 0).toBe(startCount);
+			expect(firstSource?.stopped.length ?? 0).toBe(stopCount);
+			expect(trackGain?.gain.value).toBeCloseTo(0.25, 6);
+			player.dispose();
+			playback.dispose();
+			dispose();
+		}));
+
 	test("applies track gain to the track gain node", () =>
 		createRoot((dispose) => {
 			const playback = createPlaybackController({

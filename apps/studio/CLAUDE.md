@@ -23,8 +23,8 @@ The Solid.js studio. Served by Vite during `bun run dev`. Consumes `@kut-kut/eng
 - **All rendering/animation/export/audio/TTS logic belongs in `@kut-kut/engine`.** Studio is UI, wiring, and IO. If a piece of logic could run without Solid JSX + DOM chrome, push it into the engine.
 - **Solid-idiomatic state.** `createSignal`/`createStore` inside feature stores. No global event bus; no Redux-style dispatchers.
 - **Disk IO only via the Vite dev plugin.** No FS Access API, no OPFS, no browser file pickers. The plugin is the single source of truth for persistence.
-- **Feature-detect Chromium-only APIs** (WebCodecs, parts of Web Speech). If missing, show a clear banner and a graceful fallback — never a silent no-op.
-- **No secrets committed.** `VITE_ELEVENLABS_API_KEY` lives in `.env.local` (gitignored). It will be embedded in the dev bundle — acceptable because the bundle only runs on the user's own machine.
+- **Feature-detect Chromium-only APIs** (WebCodecs, WebGPU, MediaRecorder). If missing, show a clear banner and a graceful fallback — never a silent no-op.
+- **No secrets committed.** If a future adapter needs an API key, it goes in `.env.local` (gitignored) as a `VITE_*` variable — acceptable to embed in the dev bundle because it only runs on the user's own machine.
 
 ## Feature CLAUDE.md's
 

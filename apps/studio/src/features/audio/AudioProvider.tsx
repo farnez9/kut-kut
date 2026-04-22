@@ -382,6 +382,7 @@ export const AudioProvider = (props: AudioProviderProps): JSX.Element => {
 		peaks,
 		decodeState,
 		importFile,
+		ingestAudioFile,
 		importState,
 		importError,
 		recordSupported,

@@ -11,7 +11,7 @@ Headless animation engine. Consumed by `apps/studio` today; publishable to npm t
 - **timeline/** — Timeline, Track, Clip, Keyframe, easing curves, interpolation, `PlaybackController`, time source.
 - **render/** — `Renderer` interface + Pixi adapter (2D) + Three adapter (3D) + layered compositor.
 - **audio/** — Audio track graph, Web Audio playback, waveform peaks, MediaRecorder wrapper.
-- **tts/** — `TTSProvider` interface + WebSpeech adapter + ElevenLabs adapter.
+- **tts/** — `TtsProvider` interface + Kokoro (via `kokoro-js`) in-browser adapter.
 - **export/** — WebCodecs encoder pipeline, mp4-muxer, browser download trigger.
 - **project/** — Project schema, serialize/deserialize, version migrations.
 

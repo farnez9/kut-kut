@@ -6,6 +6,7 @@ import {
 	AudioProvider,
 	CleanAssetsButton,
 	RecordButton,
+	TtsButton,
 } from "./features/audio/index.ts";
 import { Inspector, InspectorHint } from "./features/inspector/index.ts";
 import { LayersPanel } from "./features/layers/index.ts";
@@ -252,6 +253,7 @@ const TimelineHeaderActions = (props: {
 			<Show when={ctx && !props.collapsed}>
 				<TimelineImportButton />
 				<RecordButton />
+				<TtsButton />
 				<CaptionTrackButtons />
 				<CleanAssetsButton />
 			</Show>
