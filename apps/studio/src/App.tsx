@@ -8,6 +8,7 @@ import {
 	RecordButton,
 	TtsButton,
 } from "./features/audio/index.ts";
+import { ExportButton } from "./features/export/index.ts";
 import { Inspector, InspectorHint } from "./features/inspector/index.ts";
 import { LayersPanel } from "./features/layers/index.ts";
 import { OverlayProvider, useOverlay } from "./features/overlay/index.ts";
@@ -74,6 +75,7 @@ const TopbarRight = (): JSX.Element => {
 					{(b) => `${b.name} · ${b.scene.meta.fps} fps`}
 				</Show>
 			</span>
+			<ExportButton />
 		</div>
 	);
 };

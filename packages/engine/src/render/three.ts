@@ -153,6 +153,12 @@ export const createThreeLayerRenderer = (options: CreateLayerRendererOptions): L
 		markDirty();
 	};
 
+	const renderFrame = (): void => {
+		if (!renderer || !scene3d || !camera) return;
+		renderer.render(scene3d, camera);
+		dirty = false;
+	};
+
 	const dispose = (): void => {
 		if (rafId !== null) {
 			cancelAnimationFrame(rafId);
@@ -170,5 +176,5 @@ export const createThreeLayerRenderer = (options: CreateLayerRendererOptions): L
 		camera = null;
 	};
 
-	return { canvas, mount, setSize, dispose };
+	return { canvas, mount, setSize, renderFrame, dispose };
 };

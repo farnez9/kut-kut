@@ -97,6 +97,10 @@ export const createPixiLayerRenderer = (options: CreateLayerRendererOptions): La
 		if (app) app.renderer.resize(width, height);
 	};
 
+	const renderFrame = (): void => {
+		if (app) app.renderer.render(app.stage);
+	};
+
 	const dispose = (): void => {
 		if (disposeRoot) {
 			disposeRoot();
@@ -108,5 +112,5 @@ export const createPixiLayerRenderer = (options: CreateLayerRendererOptions): La
 		}
 	};
 
-	return { canvas, mount, setSize, dispose };
+	return { canvas, mount, setSize, renderFrame, dispose };
 };

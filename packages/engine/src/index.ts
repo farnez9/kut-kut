@@ -9,6 +9,12 @@ export {
 } from "./audio/index.ts";
 export { parseSRT, parseVTT, serializeSRT, serializeVTT } from "./captions/index.ts";
 export {
+	type ExportProgress,
+	type ExportVideoOptions,
+	exportVideo,
+	mixTimelineAudio,
+} from "./export/index.ts";
+export {
 	applyNodeOps,
 	applyOverlay,
 	CURRENT_OVERLAY_VERSION,

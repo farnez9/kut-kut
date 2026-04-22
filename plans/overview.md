@@ -1,6 +1,6 @@
 # Kut-Kut — overview
 
-**Last updated:** 2026-04-22 (session 17 shipped)
+**Last updated:** 2026-04-22 (session 18 shipped)
 
 ## Product
 
@@ -21,7 +21,9 @@ A general-purpose, local-first authoring tool for 2D and 3D animated videos. You
 
 **Plugin.** `apps/studio/vite/project-fs.ts` — endpoints: list projects, read project (timeline + overlay + asset manifest), write timeline, write overlay, upload asset. Path-safety via name regex + `path.relative` containment.
 
-**Next session:** 18 — Engine export pipeline (WebCodecs video + audio encode, mp4-muxer, progress/cancel, browser download, export dialog).
+**Export.** Engine `export/` orchestrates a frame-stepped render: `LayerRenderer.renderFrame()` forces sync draws on Pixi + Three, `Compositor.composite(output)` z-orders layer canvases onto one output canvas per frame, `exportVideo({scene, timeline, overlay, audioTracks, audioBuffers, compositor, signal, onProgress})` feeds `VideoFrame`s to `VideoEncoder` (H.264 `avc1.640028`, 8 Mbps, 2s GOP) in parallel with `mixTimelineAudio` (OfflineAudioContext → planar f32 → AudioEncoder, AAC-LC 128 kbps 48 kHz stereo), muxed via `mp4-muxer` with `ArrayBufferTarget` + `fastStart: "in-memory"`, returns a `Blob`. Back-pressure via `encodeQueueSize` polling (maxQueue 4 video / 8 audio); cancellation polled per frame + audio chunk via `AbortSignal`. Studio `features/export/`: `<ExportButton>` in topbar, `<ExportDialog>` mounts its own offscreen compositor (so live preview keeps running), shows scene meta + progress bar + Cancel, feature-detects `VideoEncoder`/`AudioEncoder` with a banner, downloads via anchor click as `<project-slug>-<YYYYMMDD-HHmm>.mp4`.
+	
+**Next session:** 19 — Short-form vertical mode + aspect presets (16:9 / 9:16 / 1:1, safe-zone guides, per-aspect export configs).
 
 ## Architecture
 
@@ -89,6 +91,7 @@ One line per completed session — the canonical "what exists". Append at sessio
 - **15** (2026-04-21) Audio clip editing: body drag + left/right trim on audio clips with non-slip semantics (left-trim shifts `start` + `offset` by the same delta), three raw setters on `TimelineContext` + matching undoable commands, buffer-length + `MIN_CLIP_SEC` clamps at the call site, waveform already offset-aware from session 13.
 - **16** (2026-04-21) Captions: engine `CaptionTrack`/`CaptionClip` + schema v3 migration, pure SRT/VTT parse+serialize (tolerates BOM/CRLF/`,`·`.`/VTT preamble), timeline caption row with drag/trim/inline textarea editor and Add·Import·Export SRT·VTT header buttons, DOM `<CaptionOverlay>` in the preview with global `C` hotkey.
 - **17** (2026-04-22) TTS: engine `TtsProvider` iface + `createKokoroProvider` (in-browser via `kokoro-js`, lazy ONNX model load with `warmUp(onProgress)`, `floatPcmToWav` helper); studio `<TtsButton>`/`<TtsPanel>` with cold→loading→ready warm-up state, Generate routes through the now-public shared `ingestAudioFile` tail; shared `extensionForMime` hoisted to `features/audio/mime.ts`. Hardened `createAudioPlayer.reconcile()` to be idempotent (active sources keyed by `clip.id`; force-restart only on seek / state transition; gain-only updates stay on the `GainNode`) — fixes metallic/bassy artefact on timeline playback of generated and recorded clips.
+- **18** (2026-04-22) Export pipeline: engine `export/` with `mixTimelineAudio` (OfflineAudioContext), `encodeVideoStream`/`encodeAudioStream` back-pressured WebCodecs helpers, `exportVideo` top-level orchestrator muxing via `mp4-muxer` to a `Blob`; `LayerRenderer.renderFrame()` + `Compositor.composite(output)` added for frame-stepped compositing; studio `<ExportButton>` + `<ExportDialog>` (offscreen compositor, progress + cancel, feature-detect banner, timestamped filename).
 
 ## Performance & memory budgets
 
@@ -99,7 +102,7 @@ One line per completed session — the canonical "what exists". Append at sessio
 
 ## Open questions
 
-- **Pixi + Three compositor** stays as stacked canvases for v1. Sharing a `GPUDevice` across both libs is possible but fiddly — revisit with a spike before session 17 (export).
+- **Pixi + Three compositor** stays as stacked canvases. Shared `GPUDevice` was not needed for export (session 18) — revisit only if export perf becomes a bottleneck.
 - **Vec3 sub-component keyframes.** `applyTimeline` can't animate `transform.position.x` via `NumberTrack` today. Pick between resolver widening or property splitting when a real project needs it.
 
 ## Naming TBDs

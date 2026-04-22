@@ -5,6 +5,8 @@ export type Compositor = {
 	readonly host: HTMLElement;
 	mount: () => Promise<void>;
 	setSize: (width: number, height: number) => void;
+	renderFrame: () => void;
+	composite: (output: HTMLCanvasElement) => void;
 	dispose: () => void;
 };
 
@@ -34,6 +36,19 @@ export const createCompositor = (options: CreateCompositorOptions): Compositor =
 		for (const renderer of renderers) renderer.setSize(width, height);
 	};
 
+	const renderFrame = (): void => {
+		for (const renderer of renderers) renderer.renderFrame();
+	};
+
+	const composite = (output: HTMLCanvasElement): void => {
+		const ctx = output.getContext("2d");
+		if (!ctx) throw new Error("composite: output canvas has no 2d context");
+		ctx.clearRect(0, 0, output.width, output.height);
+		for (const renderer of renderers) {
+			ctx.drawImage(renderer.canvas, 0, 0, output.width, output.height);
+		}
+	};
+
 	const dispose = (): void => {
 		while (renderers.length > 0) {
 			const renderer = renderers.pop();
@@ -44,5 +59,5 @@ export const createCompositor = (options: CreateCompositorOptions): Compositor =
 		mounted = false;
 	};
 
-	return { host, mount, setSize, dispose };
+	return { host, mount, setSize, renderFrame, composite, dispose };
 };

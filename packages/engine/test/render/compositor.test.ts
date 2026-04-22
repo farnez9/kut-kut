@@ -62,6 +62,7 @@ const makeFactory = () => {
 			setSize: (w, h) => {
 				events.push({ kind: "size", id, w, h });
 			},
+			renderFrame: () => {},
 			dispose: () => {
 				events.push({ kind: "dispose", id });
 			},
@@ -142,6 +143,7 @@ describe("Compositor", () => {
 				canvas: makeCanvas("x"),
 				mount: async () => {},
 				setSize: () => {},
+				renderFrame: () => {},
 				dispose: () => {},
 			};
 		};

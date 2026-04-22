@@ -5,6 +5,7 @@ export type LayerRenderer = {
 	readonly canvas: HTMLCanvasElement;
 	mount: (host: HTMLElement) => Promise<void>;
 	setSize: (width: number, height: number) => void;
+	renderFrame: () => void;
 	dispose: () => void;
 };
 
