@@ -1,6 +1,6 @@
 # Kut-Kut — overview
 
-**Last updated:** 2026-04-23 (session 19 shipped)
+**Last updated:** 2026-04-23 (session 20 shipped)
 
 ## Product
 
@@ -25,7 +25,9 @@ A general-purpose, local-first authoring tool for 2D and 3D animated videos. You
 	
 **Aspect presets.** Overlay schema v3 adds an optional `meta?` field; `applyOverlayMeta` shallow-merges it onto `scene.meta` inside `OverlayProvider.scene()` and at the top of `exportVideo`. Studio `<AspectPresetToggle>` in the topbar commits `setOverlayMetaCommand` (routed through the unified command store, undoable + persisted in `overlay.json`) for 16:9 / 9:16 / 1:1. `PreviewStageHost` letterbox-scaffolds the preview with live `aspect-ratio` (best-effort — the host doesn't fully narrow in portrait inside the flex cell; deferred).
 
-**Next session:** 20 — Code-first scene authoring polish (`scene.ts` conventions + helpers, HMR story for scene edits, starter examples).
+**Scene HMR.** `apps/studio/vite/scene-hmr.ts` injects `import.meta.hot.accept(...)` into every `projects/*/scene.ts`, dispatching a `kk:scene-hmr` CustomEvent with the new module + `import.meta.url`. `<ProjectProvider>` exposes a `liveFactory` signal; the bundle's `factory` field is a stable wrapper that delegates to `liveFactory()`. `OverlayProvider.scene()`'s memo (which calls `props.factory()`) tracks `liveFactory` transitively, so a swap re-runs the memo, `<KeyedPreviewHost>` disposes + remounts the compositor cleanly, and the bundle reference itself doesn't change — `<Show keyed>` keeps `PlaybackProvider`/`OverlayProvider`/`TimelineProvider`/`AudioProvider` mounted, so playback time, undo history, and decoded audio buffers all survive. Authoring conventions live in `projects/CLAUDE.md` (factory contract, name-path stability, HMR semantics).
+
+**Next session:** 21 — Polish + publish prep (shortcuts, a11y, perf profiling, docs, engine publish prep).
 
 ## Architecture
 
@@ -69,7 +71,7 @@ See `plans/decisions/0001-architecture-choices.md` for locked decisions. Key spl
 | 17  | TTS: adapters + panel                 | Provider iface, Kokoro (in-browser) adapter, studio panel with warm-up progress, idempotent audio scheduler |
 | 18  | Engine: export pipeline               | WebCodecs video + audio encode, mp4-muxer, progress/cancel, browser download, export dialog |
 | 19  | Short-form vertical mode + aspects    | 16:9 / 9:16 / 1:1 presets via overlay meta, export picks up scene dimensions |
-| 20  | Code-first scene authoring polish     | `scene.ts` conventions + helpers, HMR story for scene edits, starter examples |
+| 20  | Code-first scene authoring polish     | `scene.ts` HMR (factory hot-swap preserves playback/audio/undo) + `projects/CLAUDE.md` authoring guide |
 | 21+ | Polish + publish prep                 | Shortcuts, a11y, perf profiling, docs, engine publish prep |
 
 ## Progress log
@@ -95,6 +97,7 @@ One line per completed session — the canonical "what exists". Append at sessio
 - **17** (2026-04-22) TTS: engine `TtsProvider` iface + `createKokoroProvider` (in-browser via `kokoro-js`, lazy ONNX model load with `warmUp(onProgress)`, `floatPcmToWav` helper); studio `<TtsButton>`/`<TtsPanel>` with cold→loading→ready warm-up state, Generate routes through the now-public shared `ingestAudioFile` tail; shared `extensionForMime` hoisted to `features/audio/mime.ts`. Hardened `createAudioPlayer.reconcile()` to be idempotent (active sources keyed by `clip.id`; force-restart only on seek / state transition; gain-only updates stay on the `GainNode`) — fixes metallic/bassy artefact on timeline playback of generated and recorded clips.
 - **18** (2026-04-22) Export pipeline: engine `export/` with `mixTimelineAudio` (OfflineAudioContext), `encodeVideoStream`/`encodeAudioStream` back-pressured WebCodecs helpers, `exportVideo` top-level orchestrator muxing via `mp4-muxer` to a `Blob`; `LayerRenderer.renderFrame()` + `Compositor.composite(output)` added for frame-stepped compositing; studio `<ExportButton>` + `<ExportDialog>` (offscreen compositor, progress + cancel, feature-detect banner, timestamped filename).
 - **19** (2026-04-23) Aspect presets: overlay schema v3 with optional `meta?` (width/height/fps/duration), pure `applyOverlayMeta` called from `OverlayProvider.scene()` + top of `exportVideo`, studio `<AspectPresetToggle>` in topbar with `setOverlayMetaCommand` (undoable, persisted). Preview letterbox scaffolded via inline `aspect-ratio` on `PreviewStageHost` — visual fit imperfect in portrait/square (deferred). Safe-zone overlay implemented then removed pre-commit.
+- **20** (2026-04-23) Scene HMR: `apps/studio/vite/scene-hmr.ts` injects `import.meta.hot.accept(...)` into every `projects/*/scene.ts` and dispatches a `kk:scene-hmr` CustomEvent; `<ProjectProvider>` exposes a `liveFactory` signal with a stable `bundle.factory` wrapper that delegates to it, so OverlayProvider's `scene` memo re-runs on edit, KeyedPreviewHost remounts the compositor, and bundle identity stays stable (Playback/Timeline/Audio/undo all survive). Authoring conventions documented in new `projects/CLAUDE.md`. Plugin regex covered by `scene-hmr.test.ts`.
 
 ## Performance & memory budgets
 

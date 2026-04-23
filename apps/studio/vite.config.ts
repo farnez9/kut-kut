@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import solid from "vite-plugin-solid";
 import { projectFsPlugin } from "./vite/project-fs.ts";
+import { sceneHmrPlugin } from "./vite/scene-hmr.ts";
 
 const studioRoot = path.dirname(fileURLToPath(import.meta.url));
 const enginePkg = path.resolve(studioRoot, "../../packages/engine");
@@ -27,5 +28,5 @@ export default defineConfig({
 	optimizeDeps: {
 		exclude: ["kokoro-js", "@huggingface/transformers"],
 	},
-	plugins: [solid(), projectFsPlugin()],
+	plugins: [solid(), sceneHmrPlugin(), projectFsPlugin()],
 });

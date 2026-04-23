@@ -6,7 +6,7 @@ import {
 	type Scene,
 } from "@kut-kut/engine";
 import type { JSX } from "solid-js";
-import { createSignal, onMount } from "solid-js";
+import { createSignal, onCleanup, onMount } from "solid-js";
 import { listProjects, type ProjectListing, readProject } from "../../lib/plugin-client.ts";
 import {
 	type ProjectBundle,
@@ -18,6 +18,8 @@ import {
 export type ProjectProviderProps = { children: JSX.Element };
 
 type SceneModule = { default: () => Scene };
+
+type SceneHmrDetail = { url: string; module: SceneModule };
 
 const readQueryProject = (): string | null => {
 	if (typeof window === "undefined") return null;
@@ -38,6 +40,7 @@ export const ProjectProvider = (props: ProjectProviderProps): JSX.Element => {
 	const [bundle, setBundle] = createSignal<ProjectBundle | null>(null);
 	const [state, setState] = createSignal<ProjectLoadState>("idle");
 	const [error, setError] = createSignal<Error | null>(null);
+	const [liveFactory, setLiveFactory] = createSignal<(() => Scene) | null>(null);
 
 	let generation = 0;
 
@@ -53,13 +56,18 @@ export const ProjectProvider = (props: ProjectProviderProps): JSX.Element => {
 				readProject(name),
 			]);
 			if (gen !== generation) return;
-			const factory = mod.default;
-			const scene = factory();
+			const initialFactory = mod.default;
+			setLiveFactory(() => initialFactory);
+			const factoryWrapper = (): Scene => {
+				const live = liveFactory();
+				return (live ?? initialFactory)();
+			};
+			const scene = initialFactory();
 			const timeline = projectState.timeline
 				? deserializeTimeline(projectState.timeline)
 				: createTimeline();
 			const overlay = projectState.overlay ? parseOverlay(projectState.overlay) : emptyOverlay();
-			setBundle({ name, scene, factory, timeline, overlay });
+			setBundle({ name, scene, factory: factoryWrapper, timeline, overlay });
 			setState("ready");
 			writeQueryProject(name);
 		} catch (err) {
@@ -86,6 +94,26 @@ export const ProjectProvider = (props: ProjectProviderProps): JSX.Element => {
 	};
 
 	onMount(() => {
+		const onSceneHmr = (event: Event): void => {
+			const detail = (event as CustomEvent<SceneHmrDetail>).detail;
+			if (!detail?.module) return;
+			const current = bundle();
+			if (!current) return;
+			const entry = available().find((p) => p.name === current.name);
+			if (!entry) return;
+			let pathname: string;
+			try {
+				pathname = new URL(detail.url).pathname;
+			} catch {
+				return;
+			}
+			if (!pathname.endsWith(`${entry.absolutePath}/scene.ts`)) return;
+			const next = detail.module.default;
+			if (typeof next !== "function") return;
+			setLiveFactory(() => next);
+		};
+		window.addEventListener("kk:scene-hmr", onSceneHmr);
+		onCleanup(() => window.removeEventListener("kk:scene-hmr", onSceneHmr));
 		refreshList().catch((err) => {
 			setError(err instanceof Error ? err : new Error(String(err)));
 			setState("error");

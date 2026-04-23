@@ -54,3 +54,4 @@ See `plans/learnings.md`. When a task enters territory where the agent has previ
 - `plans/learnings.md` — mistakes ledger.
 - `apps/studio/src/features/<feature>/CLAUDE.md` — feature-level context, added when the feature lands.
 - `packages/engine/CLAUDE.md` — engine module map and rules.
+- `projects/CLAUDE.md` — `scene.ts` authoring guide (factory contract, naming/path stability, HMR semantics).
