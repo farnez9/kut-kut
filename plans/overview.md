@@ -27,8 +27,6 @@ A general-purpose, local-first authoring tool for 2D and 3D animated videos. You
 
 **Scene HMR.** `apps/studio/vite/scene-hmr.ts` injects `import.meta.hot.accept(...)` into every `projects/*/scene.ts`, dispatching a `kk:scene-hmr` CustomEvent with the new module + `import.meta.url`. `<ProjectProvider>` exposes a `liveFactory` signal; the bundle's `factory` field is a stable wrapper that delegates to `liveFactory()`. `OverlayProvider.scene()`'s memo (which calls `props.factory()`) tracks `liveFactory` transitively, so a swap re-runs the memo, `<KeyedPreviewHost>` disposes + remounts the compositor cleanly, and the bundle reference itself doesn't change — `<Show keyed>` keeps `PlaybackProvider`/`OverlayProvider`/`TimelineProvider`/`AudioProvider` mounted, so playback time, undo history, and decoded audio buffers all survive. Authoring conventions live in `projects/CLAUDE.md` (factory contract, name-path stability, HMR semantics).
 
-**Next session:** 21 — Polish + publish prep (shortcuts, a11y, perf profiling, docs, engine publish prep).
-
 ## Architecture
 
 See `plans/decisions/0001-architecture-choices.md` for locked decisions. Key split:
@@ -72,7 +70,6 @@ See `plans/decisions/0001-architecture-choices.md` for locked decisions. Key spl
 | 18  | Engine: export pipeline               | WebCodecs video + audio encode, mp4-muxer, progress/cancel, browser download, export dialog |
 | 19  | Short-form vertical mode + aspects    | 16:9 / 9:16 / 1:1 presets via overlay meta, export picks up scene dimensions |
 | 20  | Code-first scene authoring polish     | `scene.ts` HMR (factory hot-swap preserves playback/audio/undo) + `projects/CLAUDE.md` authoring guide |
-| 21+ | Polish + publish prep                 | Shortcuts, a11y, perf profiling, docs, engine publish prep |
 
 ## Progress log
 
