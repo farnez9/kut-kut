@@ -22,7 +22,16 @@ export const resolveProperty = (node: Node, path: string): Property<unknown> | u
 export const isNumberProperty = (p: Property<unknown>): p is Property<number> & Property<unknown> =>
 	typeof p.initial === "number";
 
+export const isStringProperty = (p: Property<unknown>): p is Property<string> & Property<unknown> =>
+	typeof p.initial === "string";
+
+const isVec3 = (value: unknown): value is Vec3 =>
+	Array.isArray(value) && value.length === 3 && value.every((v) => typeof v === "number");
+
 export const isVec3Property = (p: Property<unknown>): p is Property<Vec3> & Property<unknown> =>
-	Array.isArray(p.initial) &&
-	p.initial.length === 3 &&
-	p.initial.every((v) => typeof v === "number");
+	isVec3(p.initial);
+
+export const isVec3ArrayProperty = (
+	p: Property<unknown>,
+): p is Property<Vec3[]> & Property<unknown> =>
+	Array.isArray(p.initial) && p.initial.every((v) => isVec3(v));

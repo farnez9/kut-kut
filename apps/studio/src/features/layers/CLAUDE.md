@@ -19,6 +19,6 @@ Left-sidebar tree of the current project's scene. Renders author-defined nodes f
 
 - Keyboard navigation, multi-select, drag-reorder, drag-reparent — deferred.
 - Rename — deferred (needs a path-rewrite pass across overrides, additions, and timeline tracks).
-- Layer-level additions (new 2D / 3D layer) — kind enum is `rect | box | group`; layers come from `scene.ts`.
+- Layer-level additions (new 2D / 3D layer) — kind enum is `rect | box | group | text | circle | line`; layers come from `scene.ts`.
 - "Has override" or "added-by-user" per-row badges — polish.
 - Destructive-delete confirmation — overlay-reversible, skipped.

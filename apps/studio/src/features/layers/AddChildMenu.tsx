@@ -13,10 +13,16 @@ const kindsFor = (parentKind: TransformKind): { kind: NodeKind; label: string }[
 	parentKind === TransformKind.TwoD
 		? [
 				{ kind: "rect", label: "Rect" },
+				{ kind: "text", label: "Text" },
+				{ kind: "circle", label: "Circle" },
+				{ kind: "line", label: "Line" },
 				{ kind: "group", label: "Group" },
 			]
 		: [
 				{ kind: "box", label: "Box" },
+				{ kind: "text", label: "Text" },
+				{ kind: "circle", label: "Circle" },
+				{ kind: "line", label: "Line" },
 				{ kind: "group", label: "Group" },
 			];
 

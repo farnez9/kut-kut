@@ -8,11 +8,16 @@ import {
 } from "../../src/overlay/index.ts";
 import {
 	createBox,
+	createCircle,
 	createLayer2D,
 	createLayer3D,
+	createLine,
 	createRect,
 	createScene,
+	createText,
+	createTransform2D,
 	findNodeByPath,
+	NodeType,
 } from "../../src/scene/index.ts";
 
 const build2DScene = () =>
@@ -129,6 +134,95 @@ describe("applyOverlay", () => {
 		});
 		expect(scene.meta.width).toBe(100);
 		expect(scene.meta.height).toBe(100);
+	});
+
+	test("writes a string override to a Text node's text property", () => {
+		const scene = createScene({
+			meta: { name: "t", width: 100, height: 100, fps: 30, duration: 1 },
+			layers: [
+				createLayer2D({
+					name: "2D",
+					children: [
+						createText({
+							name: "Label",
+							transform: createTransform2D(),
+							text: "original",
+						}),
+					],
+				}),
+			],
+		});
+		applyOverlay(
+			scene,
+			overlayWith([{ nodePath: ["2D", "Label"], property: "text", value: "updated" }]),
+		);
+		const label = findNodeByPath(scene, ["2D", "Label"]);
+		if (!label || label.type !== NodeType.Text) throw new Error("unreachable");
+		expect(label.text.get()).toBe("updated");
+	});
+
+	test("writes a Vec3[] override to a Line node's points property", () => {
+		const scene = createScene({
+			meta: { name: "t", width: 100, height: 100, fps: 30, duration: 1 },
+			layers: [
+				createLayer2D({
+					name: "2D",
+					children: [
+						createLine({
+							name: "Edge",
+							transform: createTransform2D(),
+							points: [
+								[-10, 0, 0],
+								[10, 0, 0],
+							],
+						}),
+					],
+				}),
+			],
+		});
+		applyOverlay(
+			scene,
+			overlayWith([
+				{
+					nodePath: ["2D", "Edge"],
+					property: "points",
+					value: [
+						[-50, 0, 0],
+						[50, 0, 0],
+						[60, 30, 0],
+					],
+				},
+			]),
+		);
+		const edge = findNodeByPath(scene, ["2D", "Edge"]);
+		if (!edge || edge.type !== NodeType.Line) throw new Error("unreachable");
+		expect(edge.points.get()).toEqual([
+			[-50, 0, 0],
+			[50, 0, 0],
+			[60, 30, 0],
+		]);
+	});
+
+	test("writes a scalar override to a Circle's radius", () => {
+		const scene = createScene({
+			meta: { name: "t", width: 100, height: 100, fps: 30, duration: 1 },
+			layers: [
+				createLayer2D({
+					name: "2D",
+					children: [
+						createCircle({
+							name: "Disc",
+							transform: createTransform2D(),
+							radius: 10,
+						}),
+					],
+				}),
+			],
+		});
+		applyOverlay(scene, overlayWith([{ nodePath: ["2D", "Disc"], property: "radius", value: 42 }]));
+		const disc = findNodeByPath(scene, ["2D", "Disc"]);
+		if (!disc || disc.type !== NodeType.Circle) throw new Error("unreachable");
+		expect(disc.radius.get()).toBe(42);
 	});
 
 	test("applies multiple overrides in order", () => {

@@ -84,11 +84,43 @@ describe("parseOverlay", () => {
 		expect(parsed.schemaVersion).toBe(CURRENT_OVERLAY_VERSION);
 	});
 
-	test("rejects a value that is neither number nor triple", () => {
+	test("accepts a string override value", () => {
+		const parsed = parseOverlay({
+			schemaVersion: CURRENT_OVERLAY_VERSION,
+			overrides: [{ nodePath: ["2D", "Label"], property: "text", value: "hi" }],
+			additions: [],
+			deletions: [],
+		});
+		expect(parsed.overrides[0]?.value).toBe("hi");
+	});
+
+	test("accepts an array-of-vec3 override value (line points)", () => {
+		const parsed = parseOverlay({
+			schemaVersion: CURRENT_OVERLAY_VERSION,
+			overrides: [
+				{
+					nodePath: ["2D", "Edge"],
+					property: "points",
+					value: [
+						[-10, 0, 0],
+						[10, 0, 0],
+					],
+				},
+			],
+			additions: [],
+			deletions: [],
+		});
+		expect(parsed.overrides[0]?.value).toEqual([
+			[-10, 0, 0],
+			[10, 0, 0],
+		]);
+	});
+
+	test("rejects a boolean override value", () => {
 		expect(() =>
 			parseOverlay({
 				schemaVersion: CURRENT_OVERLAY_VERSION,
-				overrides: [{ nodePath: ["2D", "Hero"], property: "transform.x", value: "100" }],
+				overrides: [{ nodePath: ["2D", "Hero"], property: "transform.x", value: true }],
 				additions: [],
 				deletions: [],
 			}),
@@ -128,12 +160,26 @@ describe("parseOverlay", () => {
 		).toThrow();
 	});
 
+	test("accepts the primitive node kinds (text/circle/line)", () => {
+		const parsed = parseOverlay({
+			schemaVersion: CURRENT_OVERLAY_VERSION,
+			overrides: [],
+			additions: [
+				{ parentPath: ["2D"], name: "Label", kind: "text" },
+				{ parentPath: ["2D"], name: "Disc", kind: "circle" },
+				{ parentPath: ["2D"], name: "Edge", kind: "line" },
+			],
+			deletions: [],
+		});
+		expect(parsed.additions.map((a) => a.kind)).toEqual(["text", "circle", "line"]);
+	});
+
 	test("rejects an unknown node kind", () => {
 		expect(() =>
 			parseOverlay({
 				schemaVersion: CURRENT_OVERLAY_VERSION,
 				overrides: [],
-				additions: [{ parentPath: ["2D"], name: "Extra", kind: "circle" }],
+				additions: [{ parentPath: ["2D"], name: "Extra", kind: "sphere" }],
 				deletions: [],
 			}),
 		).toThrow();

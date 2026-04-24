@@ -1,10 +1,13 @@
 import type { Box } from "../scene/box.ts";
+import type { Circle } from "../scene/circle.ts";
 import type { Group } from "../scene/group.ts";
 import type { Layer } from "../scene/layer.ts";
+import type { Line } from "../scene/line.ts";
 import type { Node } from "../scene/node.ts";
 import { NodeType } from "../scene/node-type.ts";
 import type { Rect } from "../scene/rect.ts";
 import type { Scene } from "../scene/scene.ts";
+import type { Text } from "../scene/text.ts";
 import {
 	type Transform,
 	type Transform2D,
@@ -15,12 +18,15 @@ import { createTimeline } from "../timeline/factories.ts";
 import { isAudioTrack, isCaptionTrack, type Timeline, type Track } from "../timeline/types.ts";
 import type {
 	BoxJSON,
+	CircleJSON,
 	GroupJSON,
 	LayerJSON,
+	LineJSON,
 	NodeJSON,
 	ProjectJSON,
 	RectJSON,
 	SceneJSON,
+	TextJSON,
 	TimelineJSON,
 	TrackJSON,
 	Transform2DJSON,
@@ -66,6 +72,39 @@ const serializeBox = (b: Box): BoxJSON => ({
 	color: b.color.get(),
 });
 
+const serializeText = (t: Text): TextJSON => ({
+	id: t.id,
+	type: NodeType.Text,
+	name: t.name,
+	transform: serializeTransform(t.transform),
+	text: t.text.get(),
+	fontSize: t.fontSize.get(),
+	fontFamily: t.fontFamily.get(),
+	color: t.color.get(),
+	align: t.align.get(),
+});
+
+const serializeCircle = (c: Circle): CircleJSON => ({
+	id: c.id,
+	type: NodeType.Circle,
+	name: c.name,
+	transform: serializeTransform(c.transform),
+	radius: c.radius.get(),
+	color: c.color.get(),
+	stroke: c.stroke.get(),
+	strokeWidth: c.strokeWidth.get(),
+});
+
+const serializeLine = (l: Line): LineJSON => ({
+	id: l.id,
+	type: NodeType.Line,
+	name: l.name,
+	transform: serializeTransform(l.transform),
+	points: l.points.get().map((p) => [p[0], p[1], p[2]] as [number, number, number]),
+	color: l.color.get(),
+	width: l.width.get(),
+});
+
 const serializeGroup = (g: Group): GroupJSON => ({
 	id: g.id,
 	type: NodeType.Group,
@@ -82,6 +121,12 @@ const serializeNode = (node: Node): NodeJSON => {
 			return serializeRect(node);
 		case NodeType.Box:
 			return serializeBox(node);
+		case NodeType.Text:
+			return serializeText(node);
+		case NodeType.Circle:
+			return serializeCircle(node);
+		case NodeType.Line:
+			return serializeLine(node);
 		default:
 			throw new Error(`serializeNode: unexpected node type "${node.type}" under a group/layer`);
 	}

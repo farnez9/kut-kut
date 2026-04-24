@@ -1,7 +1,10 @@
 import {
 	createBox,
+	createCircle,
 	createGroup,
+	createLine,
 	createRect,
+	createText,
 	createTransform2D,
 	createTransform3D,
 	type Node,
@@ -35,6 +38,7 @@ const isDeletedPath = (overlay: Overlay, path: string[]): boolean =>
 	overlay.deletions.some((d) => sameNodePath(d.path, path));
 
 const buildPlaceholder = (addition: NodeAddition, parentKind: TransformKind): Node | null => {
+	const transform = parentKind === TransformKind.TwoD ? createTransform2D() : createTransform3D();
 	switch (addition.kind) {
 		case "rect":
 			if (parentKind !== TransformKind.TwoD) return null;
@@ -43,10 +47,13 @@ const buildPlaceholder = (addition: NodeAddition, parentKind: TransformKind): No
 			if (parentKind !== TransformKind.ThreeD) return null;
 			return createBox({ name: addition.name });
 		case "group":
-			return createGroup({
-				name: addition.name,
-				transform: parentKind === TransformKind.TwoD ? createTransform2D() : createTransform3D(),
-			});
+			return createGroup({ name: addition.name, transform });
+		case "text":
+			return createText({ name: addition.name, transform });
+		case "circle":
+			return createCircle({ name: addition.name, transform });
+		case "line":
+			return createLine({ name: addition.name, transform });
 	}
 };
 

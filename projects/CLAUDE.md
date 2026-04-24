@@ -16,7 +16,41 @@ The folder name matches `[a-z0-9][a-z0-9._-]*` (enforced by the project-fs plugi
 
 ## Factory contract
 
-`scene.ts` must default-export `() => Scene` (a function, not a pre-built Scene). Per ADR 0003, the studio calls the factory on every project mount so each session gets a fresh signal graph; this matters for clean GC on project swap, HMR (below), and snapshot replay. Authoring helpers all live on the `@kut-kut/engine` public entry: `createScene`, `createLayer2D`, `createLayer3D`, `createGroup`, `createRect`, `createBox`, plus `createTransform2D` / `createTransform3D` if you want to build a transform without going through a node factory.
+`scene.ts` must default-export `() => Scene` (a function, not a pre-built Scene). Per ADR 0003, the studio calls the factory on every project mount so each session gets a fresh signal graph; this matters for clean GC on project swap, HMR (below), and snapshot replay. Authoring helpers all live on the `@kut-kut/engine` public entry: `createScene`, `createLayer2D`, `createLayer3D`, `createGroup`, `createRect`, `createBox`, `createText`, `createCircle`, `createLine`, plus `createTransform2D` / `createTransform3D` if you want to build a transform without going through a node factory.
+
+## Primitives
+
+All primitives take a `transform` (`Transform2D` or `Transform3D`) and reactive properties that can be animated via the timeline:
+
+```ts
+createText({
+  name: "Label",
+  transform: createTransform2D({ x: 0, y: -40 }),
+  text: "H₂",
+  fontSize: 48,
+  color: [1, 1, 1],
+  align: "center",                 // "left" | "center" | "right"
+});
+
+createCircle({
+  name: "Atom",
+  transform: createTransform2D({ x: -60, y: 0 }),
+  radius: 40,
+  color: [0.9, 0.9, 0.95],
+  stroke: [0.3, 0.3, 0.35],        // null to disable
+  strokeWidth: 2,
+});
+
+createLine({
+  name: "Bond",
+  transform: createTransform2D(),
+  points: [[-60, 0, 0], [60, 0, 0]],  // Vec3[] — min 2 points; 2D mount ignores z
+  color: [1, 1, 1],
+  width: 2,
+});
+```
+
+`Text`, `Circle`, and `Line` all work under both 2D and 3D layers — pick the transform with `createTransform2D()` or `createTransform3D()`. The 3D Text mount uses `troika-three-text` (SDF glyphs — crisp at any angle); the 3D Line mount uses core Three.js `Line` + `LineBasicMaterial` so `width` is capped to 1px in 3D. **N-point polyline editing is code-only for v1** — the Inspector exposes a two-endpoint editor; longer polylines are authored directly in `scene.ts`.
 
 ## Naming & paths
 

@@ -1,10 +1,13 @@
 import { createBox } from "../scene/box.ts";
+import { createCircle } from "../scene/circle.ts";
 import { findNodeByPath } from "../scene/find.ts";
 import { createGroup } from "../scene/group.ts";
+import { createLine } from "../scene/line.ts";
 import type { Node } from "../scene/node.ts";
 import { NodeType } from "../scene/node-type.ts";
 import { createRect } from "../scene/rect.ts";
 import type { Scene } from "../scene/scene.ts";
+import { createText } from "../scene/text.ts";
 import { createTransform2D, createTransform3D, TransformKind } from "../scene/transform.ts";
 import type { NodeAddition, NodeDeletion, NodeKind, Overlay } from "./schema.ts";
 
@@ -38,6 +41,7 @@ const resolveAdditionParent = (
 };
 
 const buildChild = (kind: NodeKind, name: string, parentKind: TransformKind): Node | null => {
+	const transform = parentKind === TransformKind.TwoD ? createTransform2D() : createTransform3D();
 	switch (kind) {
 		case "rect":
 			if (parentKind !== TransformKind.TwoD) return null;
@@ -46,9 +50,21 @@ const buildChild = (kind: NodeKind, name: string, parentKind: TransformKind): No
 			if (parentKind !== TransformKind.ThreeD) return null;
 			return createBox({ name, transform: { scale: [160, 160, 160] }, color: [0.9, 0.9, 0.9] });
 		case "group":
-			return createGroup({
+			return createGroup({ name, transform });
+		case "text":
+			return createText({ name, transform, text: "Label", fontSize: 32, color: [1, 1, 1] });
+		case "circle":
+			return createCircle({ name, transform, radius: 50, color: [0.9, 0.9, 0.9] });
+		case "line":
+			return createLine({
 				name,
-				transform: parentKind === TransformKind.TwoD ? createTransform2D() : createTransform3D(),
+				transform,
+				points: [
+					[-50, 0, 0],
+					[50, 0, 0],
+				],
+				color: [0.9, 0.9, 0.9],
+				width: 2,
 			});
 	}
 };

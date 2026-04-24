@@ -1,5 +1,16 @@
-import { NodeType, type TransformKind } from "@kut-kut/engine";
-import { Box, ChevronRight, Folder, Layers, RotateCcw, Square, Trash2 } from "lucide-solid";
+import { type NodeKind, NodeType, type TransformKind } from "@kut-kut/engine";
+import {
+	Box,
+	ChevronRight,
+	Circle,
+	Folder,
+	Layers,
+	Minus,
+	RotateCcw,
+	Square,
+	Trash2,
+	Type,
+} from "lucide-solid";
 import type { JSX } from "solid-js";
 import { createSignal, For, Show } from "solid-js";
 import { sameNodePath, useOverlay } from "../overlay/index.ts";
@@ -21,6 +32,12 @@ const iconFor = (type: LayerTreeNode["node"]["type"]): JSX.Element => {
 			return <Square size={13} strokeWidth={2} aria-hidden="true" />;
 		case NodeType.Box:
 			return <Box size={13} strokeWidth={2} aria-hidden="true" />;
+		case NodeType.Text:
+			return <Type size={13} strokeWidth={2} aria-hidden="true" />;
+		case NodeType.Circle:
+			return <Circle size={13} strokeWidth={2} aria-hidden="true" />;
+		case NodeType.Line:
+			return <Minus size={13} strokeWidth={2} aria-hidden="true" />;
 	}
 };
 
@@ -47,9 +64,20 @@ export const LayerNodeRow = (props: LayerNodeRowProps): JSX.Element => {
 	const hasKids = (): boolean => props.entry.children.length > 0;
 	const select = (): void => timeline.selectNode(props.entry.nodePath);
 
-	const handleAdd = (kind: "rect" | "box" | "group"): void => {
+	const handleAdd = (kind: NodeKind): void => {
 		const siblingNames = props.entry.children.map((c) => c.node.name);
-		const base = kind === "rect" ? "Rect" : kind === "box" ? "Box" : "Group";
+		const base =
+			kind === "rect"
+				? "Rect"
+				: kind === "box"
+					? "Box"
+					: kind === "text"
+						? "Text"
+						: kind === "circle"
+							? "Circle"
+							: kind === "line"
+								? "Line"
+								: "Group";
 		const name = pickUniqueName(siblingNames, base);
 		overlay.addNode({ parentPath: props.entry.nodePath, name, kind });
 		timeline.selectNode([...props.entry.nodePath, name]);

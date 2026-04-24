@@ -40,7 +40,7 @@ Because the scene is rebuilt from the factory on every structural change, restor
 
 - Node rename / reparent / reorder — deferred (rename needs a rewrite pass over overrides, additions, timeline tracks).
 - Layer-level additions — kind enum is `rect | box | group`; layers come from `scene.ts`.
-- Non-numeric override values (strings, enums) — the override schema is still `number | [number, number, number]`.
+- Per-index array-element overrides — the override schema now accepts `number | string | Vec3 | Vec3[]`, but multi-segment paths like `points.0.x` are not resolved; `points` is stored as a whole array in one override.
 - Undo/redo integration — session 11 via a generalized command store spanning timeline + overlay.
 - Record mode that rewrites overlay edits as timeline keyframes — session 11.
 - Overlay-side tidy-up of orphaned overrides under a deleted subtree — polish session.

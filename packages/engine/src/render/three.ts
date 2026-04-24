@@ -1,21 +1,33 @@
 import { createEffect, createRoot } from "solid-js";
 import {
 	BoxGeometry,
+	BufferGeometry,
+	CircleGeometry,
+	Color,
 	HemisphereLight,
+	LineBasicMaterial,
 	Mesh,
+	MeshBasicMaterial,
 	MeshStandardMaterial,
 	type Object3D,
 	PerspectiveCamera,
 	Group as ThreeGroup,
+	Line as ThreeLine,
 	Scene as ThreeScene,
+	Vector3,
 	WebGLRenderer,
 } from "three";
 import type { WebGPURenderer } from "three/webgpu";
+// troika-three-text ships no type declarations; see ./troika-three-text.d.ts for the shim.
+import { Text as TroikaText } from "troika-three-text";
 import type { Box } from "../scene/box.ts";
+import type { Circle } from "../scene/circle.ts";
 import type { Group } from "../scene/group.ts";
 import type { Scene3DLayer } from "../scene/layer.ts";
+import type { Line } from "../scene/line.ts";
 import type { Node } from "../scene/node.ts";
 import { NodeType } from "../scene/node-type.ts";
+import type { Text } from "../scene/text.ts";
 import type { Transform3D, Vec3 } from "../scene/transform.ts";
 import type { CreateLayerRendererOptions, LayerRenderer } from "./types.ts";
 
@@ -57,6 +69,80 @@ const mountBox = (parent: Object3D, box: Box, markDirty: () => void): void => {
 	bindTransform3D(mesh, box.transform, markDirty);
 };
 
+const mountText3D = (parent: Object3D, text: Text, markDirty: () => void): void => {
+	if (text.transform.kind !== "3d") return;
+	const troika = new TroikaText();
+	troika.anchorX = "center";
+	troika.anchorY = "middle";
+	parent.add(troika);
+	createEffect(() => {
+		troika.text = text.text.get();
+		troika.sync(markDirty);
+	});
+	createEffect(() => {
+		troika.fontSize = text.fontSize.get();
+		troika.sync(markDirty);
+	});
+	createEffect(() => {
+		const [r, g, b] = text.color.get();
+		troika.color = new Color(r, g, b);
+		markDirty();
+	});
+	createEffect(() => {
+		troika.textAlign = text.align.get();
+		troika.sync(markDirty);
+	});
+	bindTransform3D(troika, text.transform, markDirty);
+};
+
+const mountCircle3D = (parent: Object3D, circle: Circle, markDirty: () => void): void => {
+	if (circle.transform.kind !== "3d") return;
+	const material = new MeshBasicMaterial({ color: 0xffffff, transparent: true });
+	let geometry = new CircleGeometry(circle.radius.get(), 32);
+	const mesh = new Mesh(geometry, material);
+	parent.add(mesh);
+	createEffect(() => {
+		const r = circle.radius.get();
+		geometry.dispose();
+		geometry = new CircleGeometry(r, 32);
+		mesh.geometry = geometry;
+		markDirty();
+	});
+	createEffect(() => {
+		const [r, g, b] = circle.color.get();
+		material.color.setRGB(r, g, b);
+		markDirty();
+	});
+	createEffect(() => {
+		material.opacity = circle.transform.opacity.get();
+		markDirty();
+	});
+	bindTransform3D(mesh, circle.transform, markDirty);
+};
+
+const mountLine3D = (parent: Object3D, line: Line, markDirty: () => void): void => {
+	if (line.transform.kind !== "3d") return;
+	const material = new LineBasicMaterial({ color: 0xffffff, transparent: true });
+	const geometry = new BufferGeometry();
+	const mesh = new ThreeLine(geometry, material);
+	parent.add(mesh);
+	createEffect(() => {
+		const pts = line.points.get();
+		mesh.geometry.setFromPoints(pts.map((p) => new Vector3(p[0], p[1], p[2])));
+		markDirty();
+	});
+	createEffect(() => {
+		const [r, g, b] = line.color.get();
+		material.color.setRGB(r, g, b);
+		markDirty();
+	});
+	createEffect(() => {
+		material.opacity = line.transform.opacity.get();
+		markDirty();
+	});
+	bindTransform3D(mesh, line.transform, markDirty);
+};
+
 const mountGroup3D = (parent: Object3D, group: Group, markDirty: () => void): void => {
 	const threeGroup = new ThreeGroup();
 	parent.add(threeGroup);
@@ -68,6 +154,15 @@ const mountNode3D = (parent: Object3D, node: Node, markDirty: () => void): void 
 	switch (node.type) {
 		case NodeType.Box:
 			mountBox(parent, node, markDirty);
+			return;
+		case NodeType.Text:
+			mountText3D(parent, node, markDirty);
+			return;
+		case NodeType.Circle:
+			mountCircle3D(parent, node, markDirty);
+			return;
+		case NodeType.Line:
+			mountLine3D(parent, node, markDirty);
 			return;
 		case NodeType.Group:
 			mountGroup3D(parent, node, markDirty);

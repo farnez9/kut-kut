@@ -15,7 +15,12 @@ import {
 
 export const CURRENT_OVERLAY_VERSION = 3 as const;
 
-export const OverrideValueSchema = union([number(), tuple([number(), number(), number()])]);
+export const OverrideValueSchema = union([
+	number(),
+	string(),
+	tuple([number(), number(), number()]),
+	array(tuple([number(), number(), number()])),
+]);
 
 export const PropertyOverrideSchema = object({
 	nodePath: array(string()),
@@ -23,7 +28,7 @@ export const PropertyOverrideSchema = object({
 	value: OverrideValueSchema,
 });
 
-export const NodeKindSchema = picklist(["rect", "box", "group"] as const);
+export const NodeKindSchema = picklist(["rect", "box", "group", "text", "circle", "line"] as const);
 
 export const NodeAdditionSchema = object({
 	parentPath: pipe(array(string()), minLength(1)),

@@ -1,4 +1,9 @@
 export { type Box, type CreateBoxOptions, createBox } from "./box.ts";
+export {
+	type Circle,
+	type CreateCircleOptions,
+	createCircle,
+} from "./circle.ts";
 export { findNodeById, findNodeByPath } from "./find.ts";
 export { type CreateGroupOptions, createGroup, type Group } from "./group.ts";
 export {
@@ -10,6 +15,7 @@ export {
 	type Scene2DLayer,
 	type Scene3DLayer,
 } from "./layer.ts";
+export { type CreateLineOptions, createLine, type Line } from "./line.ts";
 export type { Node } from "./node.ts";
 export { NodeType } from "./node-type.ts";
 export { type CreateRectOptions, createRect, type Rect } from "./rect.ts";
@@ -19,6 +25,12 @@ export {
 	type Scene,
 	type SceneMeta,
 } from "./scene.ts";
+export {
+	type CreateTextOptions,
+	createText,
+	type Text,
+	TextAlign,
+} from "./text.ts";
 export {
 	createTransform2D,
 	createTransform3D,

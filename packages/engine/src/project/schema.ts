@@ -5,6 +5,7 @@ import {
 	type InferOutput,
 	lazy,
 	literal,
+	nullable,
 	number,
 	object,
 	picklist,
@@ -18,7 +19,7 @@ import { TransformKind } from "../scene/transform.ts";
 import { EasingName } from "../timeline/easing.ts";
 import { TrackKind } from "../timeline/types.ts";
 
-export const CURRENT_SCHEMA_VERSION = 3 as const;
+export const CURRENT_SCHEMA_VERSION = 4 as const;
 
 export const Vec3Schema = tuple([number(), number(), number()]);
 
@@ -58,8 +59,46 @@ export const BoxSchema = object({
 	color: Vec3Schema,
 });
 
+export const TextAlignSchema = picklist(["left", "center", "right"] as const);
+
+export const TextSchema = object({
+	id: string(),
+	type: literal(NodeType.Text),
+	name: string(),
+	transform: TransformSchema,
+	text: string(),
+	fontSize: number(),
+	fontFamily: string(),
+	color: Vec3Schema,
+	align: TextAlignSchema,
+});
+
+export const CircleSchema = object({
+	id: string(),
+	type: literal(NodeType.Circle),
+	name: string(),
+	transform: TransformSchema,
+	radius: number(),
+	color: Vec3Schema,
+	stroke: nullable(Vec3Schema),
+	strokeWidth: number(),
+});
+
+export const LineSchema = object({
+	id: string(),
+	type: literal(NodeType.Line),
+	name: string(),
+	transform: TransformSchema,
+	points: array(Vec3Schema),
+	color: Vec3Schema,
+	width: number(),
+});
+
 export type RectJSON = InferOutput<typeof RectSchema>;
 export type BoxJSON = InferOutput<typeof BoxSchema>;
+export type TextJSON = InferOutput<typeof TextSchema>;
+export type CircleJSON = InferOutput<typeof CircleSchema>;
+export type LineJSON = InferOutput<typeof LineSchema>;
 
 export type GroupJSON = {
 	id: string;
@@ -69,7 +108,7 @@ export type GroupJSON = {
 	children: NodeJSON[];
 };
 
-export type NodeJSON = GroupJSON | RectJSON | BoxJSON;
+export type NodeJSON = GroupJSON | RectJSON | BoxJSON | TextJSON | CircleJSON | LineJSON;
 
 const NodeSchemaLazy: GenericSchema<NodeJSON> = lazy(() => NodeSchema);
 
@@ -81,7 +120,14 @@ export const GroupSchema = object({
 	children: array(NodeSchemaLazy),
 });
 
-export const NodeSchema = variant("type", [GroupSchema, RectSchema, BoxSchema]);
+export const NodeSchema = variant("type", [
+	GroupSchema,
+	RectSchema,
+	BoxSchema,
+	TextSchema,
+	CircleSchema,
+	LineSchema,
+]);
 
 export const Layer2DSchema = object({
 	id: string(),

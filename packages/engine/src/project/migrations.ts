@@ -17,6 +17,11 @@ const migrateV2ToV3 = (input: Record<string, unknown>): Record<string, unknown> 
 	schemaVersion: 3,
 });
 
+const migrateV3ToV4 = (input: Record<string, unknown>): Record<string, unknown> => ({
+	...input,
+	schemaVersion: 4,
+});
+
 export const migrate = (input: unknown): unknown => {
 	if (input === null || typeof input !== "object") return input;
 	let record = input as Record<string, unknown>;
@@ -28,6 +33,10 @@ export const migrate = (input: unknown): unknown => {
 	}
 	if (version === 2) {
 		record = migrateV2ToV3(record);
+		version = record.schemaVersion;
+	}
+	if (version === 3) {
+		record = migrateV3ToV4(record);
 		version = record.schemaVersion;
 	}
 	if (version === CURRENT_SCHEMA_VERSION) return record;

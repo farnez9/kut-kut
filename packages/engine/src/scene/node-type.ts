@@ -4,6 +4,9 @@ export const NodeType = {
 	Layer3D: "layer-3d",
 	Rect: "rect",
 	Box: "box",
+	Text: "text",
+	Circle: "circle",
+	Line: "line",
 } as const;
 
 export type NodeType = (typeof NodeType)[keyof typeof NodeType];

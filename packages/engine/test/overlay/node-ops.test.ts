@@ -132,6 +132,40 @@ describe("applyNodeOps — additions", () => {
 		expect(findNodeByPath(scene, ["Nope", "Extra"])).toBeUndefined();
 	});
 
+	test("adds text/circle/line primitives under a 2D layer", () => {
+		const scene = build2DScene();
+		applyNodeOps(
+			scene,
+			overlay({
+				additions: [
+					{ parentPath: ["2D"], name: "Label", kind: "text" },
+					{ parentPath: ["2D"], name: "Disc", kind: "circle" },
+					{ parentPath: ["2D"], name: "Edge", kind: "line" },
+				],
+			}),
+		);
+		expect(findNodeByPath(scene, ["2D", "Label"])?.type).toBe(NodeType.Text);
+		expect(findNodeByPath(scene, ["2D", "Disc"])?.type).toBe(NodeType.Circle);
+		expect(findNodeByPath(scene, ["2D", "Edge"])?.type).toBe(NodeType.Line);
+	});
+
+	test("adds text/circle/line primitives under a 3D layer", () => {
+		const scene = build3DScene();
+		applyNodeOps(
+			scene,
+			overlay({
+				additions: [
+					{ parentPath: ["3D"], name: "Label3D", kind: "text" },
+					{ parentPath: ["3D"], name: "Disc3D", kind: "circle" },
+					{ parentPath: ["3D"], name: "Edge3D", kind: "line" },
+				],
+			}),
+		);
+		expect(findNodeByPath(scene, ["3D", "Label3D"])?.transform.kind).toBe("3d");
+		expect(findNodeByPath(scene, ["3D", "Disc3D"])?.transform.kind).toBe("3d");
+		expect(findNodeByPath(scene, ["3D", "Edge3D"])?.transform.kind).toBe("3d");
+	});
+
 	test("silently skips an addition whose name collides with an existing sibling", () => {
 		const scene = build2DScene();
 		applyNodeOps(
