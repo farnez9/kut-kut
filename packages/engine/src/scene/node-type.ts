@@ -7,6 +7,7 @@ export const NodeType = {
 	Text: "text",
 	Circle: "circle",
 	Line: "line",
+	Image: "image",
 } as const;
 
 export type NodeType = (typeof NodeType)[keyof typeof NodeType];

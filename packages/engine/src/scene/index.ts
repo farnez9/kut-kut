@@ -7,6 +7,11 @@ export {
 export { findNodeById, findNodeByPath } from "./find.ts";
 export { type CreateGroupOptions, createGroup, type Group } from "./group.ts";
 export {
+	type CreateImageOptions,
+	createImage,
+	type Image,
+} from "./image.ts";
+export {
 	type CreateLayer2DOptions,
 	type CreateLayer3DOptions,
 	createLayer2D,

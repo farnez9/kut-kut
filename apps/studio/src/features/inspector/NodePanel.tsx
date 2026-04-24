@@ -1,10 +1,22 @@
-import type { Circle, Line, Node, Text, Transform2D, Transform3D, Vec3 } from "@kut-kut/engine";
+import type {
+	Circle,
+	Image as ImageNode,
+	Line,
+	Node,
+	Text,
+	Transform2D,
+	Transform3D,
+	Vec3,
+} from "@kut-kut/engine";
 import { NodeType, TransformKind } from "@kut-kut/engine";
 import type { JSX } from "solid-js";
 import { Show } from "solid-js";
 import { useCommands } from "../../lib/commands/index.ts";
+import { pickFile } from "../../lib/pick-file.ts";
+import { uploadAsset } from "../../lib/plugin-client.ts";
 import { useOverlay } from "../overlay/index.ts";
 import { usePlayback } from "../playback/index.ts";
+import { useProject } from "../project/index.ts";
 import { useRecord } from "../record/index.ts";
 import { useTimeline } from "../timeline/index.ts";
 import { NumberInput } from "./editors/NumberInput.tsx";
@@ -32,6 +44,8 @@ const typeLabel = (type: Node["type"]): string => {
 			return "Circle";
 		case NodeType.Line:
 			return "Line";
+		case NodeType.Image:
+			return "Image";
 	}
 };
 
@@ -416,6 +430,62 @@ const CircleNodeEditor = (props: { nodePath: string[]; circle: Circle }): JSX.El
 	</>
 );
 
+const ImageNodeEditor = (props: { nodePath: string[]; image: ImageNode }): JSX.Element => {
+	const deps = useRouteDeps();
+	const project = useProject();
+	const effectiveSrc = (): string => {
+		const stored = deps.overlay.getOverride(props.nodePath, "src");
+		if (typeof stored === "string") return stored;
+		return props.image.src.get();
+	};
+	const replace = async (): Promise<void> => {
+		const projectName = project.bundle()?.name;
+		if (!projectName) return;
+		const file = await pickFile("image/*");
+		if (!file) return;
+		try {
+			const { path } = await uploadAsset(projectName, file);
+			commitPropertyEdit(deps, props.nodePath, "src", path);
+		} catch (err) {
+			console.error("[inspector] replace image failed", err);
+		}
+	};
+	return (
+		<>
+			<div class="inspector__section">Image</div>
+			<div class="inspector__field">
+				<span class="inspector__label">src</span>
+				<div class="inspector__image-src">
+					<span class="inspector__image-src-path" title={effectiveSrc()}>
+						{effectiveSrc()}
+					</span>
+					<button
+						type="button"
+						class="inspector__image-replace"
+						onClick={() => {
+							replace();
+						}}
+					>
+						Replace…
+					</button>
+				</div>
+			</div>
+			<FieldNumber
+				nodePath={props.nodePath}
+				property="width"
+				label="width"
+				initial={() => props.image.width.get()}
+			/>
+			<FieldNumber
+				nodePath={props.nodePath}
+				property="height"
+				label="height"
+				initial={() => props.image.height.get()}
+			/>
+		</>
+	);
+};
+
 const LineNodeEditor = (props: { nodePath: string[]; line: Line }): JSX.Element => (
 	<>
 		<div class="inspector__section">Line</div>
@@ -463,6 +533,9 @@ export const NodePanel = (props: { selection: NodeSelection }): JSX.Element => {
 			</Show>
 			<Show when={node().type === NodeType.Line}>
 				<LineNodeEditor nodePath={nodePath()} line={node() as Line} />
+			</Show>
+			<Show when={node().type === NodeType.Image}>
+				<ImageNodeEditor nodePath={nodePath()} image={node() as ImageNode} />
 			</Show>
 		</div>
 	);

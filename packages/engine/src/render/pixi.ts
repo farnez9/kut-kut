@@ -1,7 +1,8 @@
-import { Application, Container, Graphics, Text as PixiText } from "pixi.js";
+import { Application, Assets, Container, Graphics, Text as PixiText, Sprite } from "pixi.js";
 import { createEffect, createRoot } from "solid-js";
 import type { Circle } from "../scene/circle.ts";
 import type { Group } from "../scene/group.ts";
+import type { Image } from "../scene/image.ts";
 import type { Scene2DLayer } from "../scene/layer.ts";
 import type { Line } from "../scene/line.ts";
 import type { Node } from "../scene/node.ts";
@@ -113,14 +114,50 @@ const mountLine = (parent: Container, line: Line): void => {
 	bindTransform2D(g, line.transform);
 };
 
-const mountGroup = (parent: Container, group: Group): void => {
+const mountImage = (parent: Container, image: Image, pending: Set<Promise<unknown>>): void => {
+	if (image.transform.kind !== "2d") return;
+	const sprite = new Sprite();
+	sprite.anchor.set(0.5, 0.5);
+	sprite.visible = false;
+	parent.addChild(sprite);
+	createEffect(() => {
+		const url = image.src.get();
+		sprite.visible = false;
+		const load = Assets.load(url).then(
+			(texture) => {
+				if (image.src.get() !== url) return;
+				sprite.texture = texture;
+				// Pixi's width/height setters derive from the texture frame, so reapply
+				// the authored size after a new texture lands or a swap shows the
+				// new texture at its natural pixel size for one frame.
+				sprite.width = image.width.get();
+				sprite.height = image.height.get();
+				sprite.visible = true;
+			},
+			() => {
+				sprite.visible = false;
+			},
+		);
+		pending.add(load);
+		load.finally(() => pending.delete(load));
+	});
+	createEffect(() => {
+		sprite.width = image.width.get();
+	});
+	createEffect(() => {
+		sprite.height = image.height.get();
+	});
+	bindTransform2D(sprite, image.transform);
+};
+
+const mountGroup = (parent: Container, group: Group, pending: Set<Promise<unknown>>): void => {
 	const container = new Container();
 	parent.addChild(container);
 	if (group.transform.kind === "2d") bindTransform2D(container, group.transform);
-	for (const child of group.children) mountNode(container, child);
+	for (const child of group.children) mountNode(container, child, pending);
 };
 
-const mountNode = (parent: Container, node: Node): void => {
+const mountNode = (parent: Container, node: Node, pending: Set<Promise<unknown>>): void => {
 	switch (node.type) {
 		case NodeType.Rect:
 			mountRect(parent, node);
@@ -134,8 +171,11 @@ const mountNode = (parent: Container, node: Node): void => {
 		case NodeType.Line:
 			mountLine(parent, node);
 			return;
+		case NodeType.Image:
+			mountImage(parent, node, pending);
+			return;
 		case NodeType.Group:
-			mountGroup(parent, node);
+			mountGroup(parent, node, pending);
 			return;
 		default:
 			// Silently skip incompatible content (e.g. Box under a 2D layer); revisit with tighter typing later.
@@ -150,6 +190,7 @@ export const createPixiLayerRenderer = (options: CreateLayerRendererOptions): La
 	}
 	const layer2d = layer as Scene2DLayer;
 	const canvas = document.createElement("canvas");
+	const pending = new Set<Promise<unknown>>();
 	let app: Application | null = null;
 	let disposeRoot: (() => void) | null = null;
 
@@ -169,7 +210,7 @@ export const createPixiLayerRenderer = (options: CreateLayerRendererOptions): La
 		createRoot((dispose) => {
 			disposeRoot = dispose;
 			bindTransform2D(pixiApp.stage, layer2d.transform);
-			for (const child of layer2d.children) mountNode(pixiApp.stage, child);
+			for (const child of layer2d.children) mountNode(pixiApp.stage, child, pending);
 		});
 	};
 
@@ -179,6 +220,12 @@ export const createPixiLayerRenderer = (options: CreateLayerRendererOptions): La
 
 	const renderFrame = (): void => {
 		if (app) app.renderer.render(app.stage);
+	};
+
+	const ready = async (): Promise<void> => {
+		while (pending.size > 0) {
+			await Promise.allSettled(Array.from(pending));
+		}
 	};
 
 	const dispose = (): void => {
@@ -192,5 +239,5 @@ export const createPixiLayerRenderer = (options: CreateLayerRendererOptions): La
 		}
 	};
 
-	return { canvas, mount, setSize, renderFrame, dispose };
+	return { canvas, mount, setSize, renderFrame, ready, dispose };
 };

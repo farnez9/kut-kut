@@ -8,6 +8,9 @@ export type AddNodeArgs = {
 	parentPath: string[];
 	name: string;
 	kind: NodeKind;
+	src?: string;
+	width?: number;
+	height?: number;
 };
 
 export type OverlayContextValue = {

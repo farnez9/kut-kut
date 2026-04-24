@@ -14,6 +14,7 @@ export {
 	type CircleJSON,
 	CURRENT_SCHEMA_VERSION,
 	type GroupJSON,
+	type ImageJSON,
 	type Layer2DJSON,
 	type Layer3DJSON,
 	type LayerJSON,

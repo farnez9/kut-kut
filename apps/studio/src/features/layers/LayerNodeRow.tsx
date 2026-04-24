@@ -4,6 +4,7 @@ import {
 	ChevronRight,
 	Circle,
 	Folder,
+	Image as ImageIcon,
 	Layers,
 	Minus,
 	RotateCcw,
@@ -13,11 +14,30 @@ import {
 } from "lucide-solid";
 import type { JSX } from "solid-js";
 import { createSignal, For, Show } from "solid-js";
+import { pickFile } from "../../lib/pick-file.ts";
+import { uploadAsset } from "../../lib/plugin-client.ts";
 import { sameNodePath, useOverlay } from "../overlay/index.ts";
+import { useProject } from "../project/index.ts";
 import { useTimeline } from "../timeline/index.ts";
 import { AddChildMenu } from "./AddChildMenu.tsx";
 import type { LayerTreeNode } from "./derive.ts";
 import { pickUniqueName } from "./derive.ts";
+
+const decodeImageDimensions = (file: File): Promise<{ width: number; height: number }> =>
+	new Promise((resolve, reject) => {
+		const url = URL.createObjectURL(file);
+		const img = new Image();
+		img.onload = () => {
+			const dims = { width: img.naturalWidth, height: img.naturalHeight };
+			URL.revokeObjectURL(url);
+			resolve(dims);
+		};
+		img.onerror = () => {
+			URL.revokeObjectURL(url);
+			reject(new Error(`Could not decode image dimensions for ${file.name}`));
+		};
+		img.src = url;
+	});
 
 const INDENT_PX = 14;
 
@@ -38,6 +58,8 @@ const iconFor = (type: LayerTreeNode["node"]["type"]): JSX.Element => {
 			return <Circle size={13} strokeWidth={2} aria-hidden="true" />;
 		case NodeType.Line:
 			return <Minus size={13} strokeWidth={2} aria-hidden="true" />;
+		case NodeType.Image:
+			return <ImageIcon size={13} strokeWidth={2} aria-hidden="true" />;
 	}
 };
 
@@ -52,6 +74,7 @@ export type LayerNodeRowProps = {
 export const LayerNodeRow = (props: LayerNodeRowProps): JSX.Element => {
 	const timeline = useTimeline();
 	const overlay = useOverlay();
+	const project = useProject();
 	const [expanded, setExpanded] = createSignal(true);
 	const [menuOpen, setMenuOpen] = createSignal(false);
 
@@ -64,21 +87,54 @@ export const LayerNodeRow = (props: LayerNodeRowProps): JSX.Element => {
 	const hasKids = (): boolean => props.entry.children.length > 0;
 	const select = (): void => timeline.selectNode(props.entry.nodePath);
 
-	const handleAdd = (kind: NodeKind): void => {
-		const siblingNames = props.entry.children.map((c) => c.node.name);
-		const base =
-			kind === "rect"
-				? "Rect"
-				: kind === "box"
-					? "Box"
-					: kind === "text"
-						? "Text"
-						: kind === "circle"
-							? "Circle"
-							: kind === "line"
-								? "Line"
+	const baseNameFor = (kind: NodeKind): string =>
+		kind === "rect"
+			? "Rect"
+			: kind === "box"
+				? "Box"
+				: kind === "text"
+					? "Text"
+					: kind === "circle"
+						? "Circle"
+						: kind === "line"
+							? "Line"
+							: kind === "image"
+								? "Image"
 								: "Group";
-		const name = pickUniqueName(siblingNames, base);
+
+	const handleAddImage = async (): Promise<void> => {
+		const projectName = project.bundle()?.name;
+		if (!projectName) return;
+		const file = await pickFile("image/*");
+		if (!file) return;
+		try {
+			const [{ width, height }, { path }] = await Promise.all([
+				decodeImageDimensions(file),
+				uploadAsset(projectName, file),
+			]);
+			const siblingNames = props.entry.children.map((c) => c.node.name);
+			const name = pickUniqueName(siblingNames, "Image");
+			overlay.addNode({
+				parentPath: props.entry.nodePath,
+				name,
+				kind: "image",
+				src: path,
+				width,
+				height,
+			});
+			timeline.selectNode([...props.entry.nodePath, name]);
+		} catch (err) {
+			console.error("[layers] add image failed", err);
+		}
+	};
+
+	const handleAdd = (kind: NodeKind): void => {
+		if (kind === "image") {
+			handleAddImage();
+			return;
+		}
+		const siblingNames = props.entry.children.map((c) => c.node.name);
+		const name = pickUniqueName(siblingNames, baseNameFor(kind));
 		overlay.addNode({ parentPath: props.entry.nodePath, name, kind });
 		timeline.selectNode([...props.entry.nodePath, name]);
 	};

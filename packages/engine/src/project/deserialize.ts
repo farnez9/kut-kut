@@ -3,6 +3,7 @@ import { prop } from "../reactive/property.ts";
 import type { Box } from "../scene/box.ts";
 import type { Circle } from "../scene/circle.ts";
 import type { Group } from "../scene/group.ts";
+import type { Image } from "../scene/image.ts";
 import type { Layer, Scene2DLayer, Scene3DLayer } from "../scene/layer.ts";
 import type { Line } from "../scene/line.ts";
 import type { Node } from "../scene/node.ts";
@@ -25,6 +26,7 @@ import type {
 	BoxJSON,
 	CircleJSON,
 	GroupJSON,
+	ImageJSON,
 	LayerJSON,
 	LineJSON,
 	NodeJSON,
@@ -109,6 +111,16 @@ const rehydrateLine = (l: LineJSON): Line => ({
 	width: prop(l.width),
 });
 
+const rehydrateImage = (i: ImageJSON): Image => ({
+	id: i.id,
+	type: NodeType.Image,
+	name: i.name,
+	transform: rehydrateTransform(i.transform),
+	src: prop(i.src),
+	width: prop(i.width),
+	height: prop(i.height),
+});
+
 const rehydrateGroup = (g: GroupJSON): Group => ({
 	id: g.id,
 	type: NodeType.Group,
@@ -131,6 +143,8 @@ const rehydrateNode = (node: NodeJSON): Node => {
 			return rehydrateCircle(node);
 		case NodeType.Line:
 			return rehydrateLine(node);
+		case NodeType.Image:
+			return rehydrateImage(node);
 	}
 };
 

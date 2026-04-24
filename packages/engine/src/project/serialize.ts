@@ -1,6 +1,7 @@
 import type { Box } from "../scene/box.ts";
 import type { Circle } from "../scene/circle.ts";
 import type { Group } from "../scene/group.ts";
+import type { Image } from "../scene/image.ts";
 import type { Layer } from "../scene/layer.ts";
 import type { Line } from "../scene/line.ts";
 import type { Node } from "../scene/node.ts";
@@ -20,6 +21,7 @@ import type {
 	BoxJSON,
 	CircleJSON,
 	GroupJSON,
+	ImageJSON,
 	LayerJSON,
 	LineJSON,
 	NodeJSON,
@@ -105,6 +107,16 @@ const serializeLine = (l: Line): LineJSON => ({
 	width: l.width.get(),
 });
 
+const serializeImage = (i: Image): ImageJSON => ({
+	id: i.id,
+	type: NodeType.Image,
+	name: i.name,
+	transform: serializeTransform(i.transform),
+	src: i.src.get(),
+	width: i.width.get(),
+	height: i.height.get(),
+});
+
 const serializeGroup = (g: Group): GroupJSON => ({
 	id: g.id,
 	type: NodeType.Group,
@@ -127,6 +139,8 @@ const serializeNode = (node: Node): NodeJSON => {
 			return serializeCircle(node);
 		case NodeType.Line:
 			return serializeLine(node);
+		case NodeType.Image:
+			return serializeImage(node);
 		default:
 			throw new Error(`serializeNode: unexpected node type "${node.type}" under a group/layer`);
 	}

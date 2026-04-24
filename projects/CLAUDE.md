@@ -48,9 +48,19 @@ createLine({
   color: [1, 1, 1],
   width: 2,
 });
+
+createImage({
+  name: "Sprite",
+  transform: createTransform2D(),
+  src: "assets/sprite.png",         // project-relative; place file in assets/
+  width: 240,                        // explicit scene units — not intrinsic
+  height: 160,
+});
 ```
 
-`Text`, `Circle`, and `Line` all work under both 2D and 3D layers — pick the transform with `createTransform2D()` or `createTransform3D()`. The 3D Text mount uses `troika-three-text` (SDF glyphs — crisp at any angle); the 3D Line mount uses core Three.js `Line` + `LineBasicMaterial` so `width` is capped to 1px in 3D. **N-point polyline editing is code-only for v1** — the Inspector exposes a two-endpoint editor; longer polylines are authored directly in `scene.ts`.
+`Text`, `Circle`, `Line`, and `Image` all work under both 2D and 3D layers — pick the transform with `createTransform2D()` or `createTransform3D()`. The 3D Text mount uses `troika-three-text` (SDF glyphs — crisp at any angle); the 3D Line mount uses core Three.js `Line` + `LineBasicMaterial` so `width` is capped to 1px in 3D. **N-point polyline editing is code-only for v1** — the Inspector exposes a two-endpoint editor; longer polylines are authored directly in `scene.ts`.
+
+`Image`'s `width` and `height` are **explicit, not intrinsic** — they're scene units, not pixels. The Layers panel's "Add Image" picker prefills them from the file's natural dimensions on add; after that they animate like any other reactive property. `src` is project-relative (`assets/<filename>`) — the engine fetches it via the same dev-plugin path that audio uses. Textures are loaded lazily; `exportVideo` waits for all outstanding loads before writing frame 0, so the first exported frame never blanks.
 
 ## Naming & paths
 

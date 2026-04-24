@@ -440,6 +440,40 @@ button:focus-visible {
 	color: var(--paper-mute);
 }
 
+.inspector__image-src {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
+
+.inspector__image-src-path {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--paper-mute);
+}
+
+.inspector__image-replace {
+	flex: 0 0 auto;
+	font-size: 12px;
+	padding: 2px 8px;
+	border: 1px solid var(--rule);
+	background: transparent;
+	color: var(--paper);
+	cursor: pointer;
+	border-radius: 3px;
+}
+
+.inspector__image-replace:hover {
+	border-color: var(--hot);
+	color: var(--hot);
+}
+
 /* ───── preview region (film-gate framing) ───── */
 
 .preview-stage {

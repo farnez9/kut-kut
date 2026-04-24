@@ -166,6 +166,43 @@ describe("applyNodeOps — additions", () => {
 		expect(findNodeByPath(scene, ["3D", "Edge3D"])?.transform.kind).toBe("3d");
 	});
 
+	test("adds an image with src/width/height under a 2D layer", () => {
+		const scene = build2DScene();
+		applyNodeOps(
+			scene,
+			overlay({
+				additions: [
+					{
+						parentPath: ["2D"],
+						name: "Sprite",
+						kind: "image",
+						src: "assets/sprite.png",
+						width: 320,
+						height: 200,
+					},
+				],
+			}),
+		);
+		const sprite = findNodeByPath(scene, ["2D", "Sprite"]);
+		expect(sprite?.type).toBe(NodeType.Image);
+		expect(sprite?.transform.kind).toBe("2d");
+		if (sprite?.type !== NodeType.Image) throw new Error("unreachable");
+		expect(sprite.src.get()).toBe("assets/sprite.png");
+		expect(sprite.width.get()).toBe(320);
+		expect(sprite.height.get()).toBe(200);
+	});
+
+	test("silently skips an image addition without src", () => {
+		const scene = build2DScene();
+		applyNodeOps(
+			scene,
+			overlay({
+				additions: [{ parentPath: ["2D"], name: "Sprite", kind: "image" }],
+			}),
+		);
+		expect(findNodeByPath(scene, ["2D", "Sprite"])).toBeUndefined();
+	});
+
 	test("silently skips an addition whose name collides with an existing sibling", () => {
 		const scene = build2DScene();
 		applyNodeOps(

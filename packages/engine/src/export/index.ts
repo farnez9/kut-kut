@@ -125,6 +125,13 @@ export const exportVideo = async (options: ExportVideoOptions): Promise<Blob> =>
 	const gopSize = Math.max(1, Math.round(fps * 2));
 	const output = ensureOutputCanvas(options.output, width, height);
 
+	// Warm up: apply overlay + timeline at t=0 so reactive effects kick off any
+	// async resource loads (image textures), then wait for them before frame 0.
+	if (options.overlay) applyOverlay(scene, options.overlay);
+	applyTimeline(scene, options.timeline, 0);
+	await flushMicrotasks();
+	await compositor.ready();
+
 	const audioTracks = options.audioTracks ?? [];
 	const audioBuffers = options.audioBuffers ?? new Map<string, AudioBufferLike>();
 	const hasAudio =

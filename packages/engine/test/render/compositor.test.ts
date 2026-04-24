@@ -63,6 +63,7 @@ const makeFactory = () => {
 				events.push({ kind: "size", id, w, h });
 			},
 			renderFrame: () => {},
+			ready: async () => {},
 			dispose: () => {
 				events.push({ kind: "dispose", id });
 			},
@@ -144,6 +145,7 @@ describe("Compositor", () => {
 				mount: async () => {},
 				setSize: () => {},
 				renderFrame: () => {},
+				ready: async () => {},
 				dispose: () => {},
 			};
 		};
@@ -163,5 +165,43 @@ describe("Compositor", () => {
 		await compositor.mount();
 		await compositor.mount();
 		expect(events.filter((e) => e.kind === "mount")).toHaveLength(1);
+	});
+
+	test("ready() blocks on outstanding per-renderer ready() promises", async () => {
+		const scene = createScene({
+			layers: [createLayer2D({ id: "a" }), createLayer3D({ id: "b" })],
+		});
+		const host = makeHost();
+		const releases: Array<() => void> = [];
+		let id = 0;
+		const factory = (_opts: CreateLayerRendererOptions): LayerRenderer => {
+			let resolveSelf!: () => void;
+			const own = new Promise<void>((r) => {
+				resolveSelf = r;
+			});
+			releases.push(resolveSelf);
+			return {
+				canvas: makeCanvas(`r${id++}`),
+				mount: async () => {},
+				setSize: () => {},
+				renderFrame: () => {},
+				ready: () => own,
+				dispose: () => {},
+			};
+		};
+		const compositor = createCompositor({ host, scene, createLayerRenderer: factory });
+		await compositor.mount();
+		let resolved = false;
+		const readyDone = compositor.ready().then(() => {
+			resolved = true;
+		});
+		await Promise.resolve();
+		expect(resolved).toBe(false);
+		releases[0]?.();
+		await Promise.resolve();
+		expect(resolved).toBe(false);
+		releases[1]?.();
+		await readyDone;
+		expect(resolved).toBe(true);
 	});
 });

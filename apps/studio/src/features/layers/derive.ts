@@ -2,6 +2,7 @@ import {
 	createBox,
 	createCircle,
 	createGroup,
+	createImage,
 	createLine,
 	createRect,
 	createText,
@@ -54,6 +55,15 @@ const buildPlaceholder = (addition: NodeAddition, parentKind: TransformKind): No
 			return createCircle({ name: addition.name, transform });
 		case "line":
 			return createLine({ name: addition.name, transform });
+		case "image":
+			if (!addition.src) return null;
+			return createImage({
+				name: addition.name,
+				transform,
+				src: addition.src,
+				width: addition.width ?? 240,
+				height: addition.height ?? 160,
+			});
 	}
 };
 

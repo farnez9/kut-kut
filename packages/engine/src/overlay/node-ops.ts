@@ -2,6 +2,7 @@ import { createBox } from "../scene/box.ts";
 import { createCircle } from "../scene/circle.ts";
 import { findNodeByPath } from "../scene/find.ts";
 import { createGroup } from "../scene/group.ts";
+import { createImage } from "../scene/image.ts";
 import { createLine } from "../scene/line.ts";
 import type { Node } from "../scene/node.ts";
 import { NodeType } from "../scene/node-type.ts";
@@ -9,7 +10,7 @@ import { createRect } from "../scene/rect.ts";
 import type { Scene } from "../scene/scene.ts";
 import { createText } from "../scene/text.ts";
 import { createTransform2D, createTransform3D, TransformKind } from "../scene/transform.ts";
-import type { NodeAddition, NodeDeletion, NodeKind, Overlay } from "./schema.ts";
+import type { NodeAddition, NodeDeletion, Overlay } from "./schema.ts";
 
 type ChildBearingNode = Extract<Node, { children: Node[] }>;
 
@@ -40,7 +41,8 @@ const resolveAdditionParent = (
 	return parent;
 };
 
-const buildChild = (kind: NodeKind, name: string, parentKind: TransformKind): Node | null => {
+const buildChild = (addition: NodeAddition, parentKind: TransformKind): Node | null => {
+	const { kind, name } = addition;
 	const transform = parentKind === TransformKind.TwoD ? createTransform2D() : createTransform3D();
 	switch (kind) {
 		case "rect":
@@ -66,6 +68,16 @@ const buildChild = (kind: NodeKind, name: string, parentKind: TransformKind): No
 				color: [0.9, 0.9, 0.9],
 				width: 2,
 			});
+		case "image": {
+			if (!addition.src) return null;
+			return createImage({
+				name,
+				transform,
+				src: addition.src,
+				width: addition.width ?? 240,
+				height: addition.height ?? 160,
+			});
+		}
 	}
 };
 
@@ -73,7 +85,7 @@ const addOne = (scene: Scene, addition: NodeAddition): void => {
 	const parent = resolveAdditionParent(scene, addition.parentPath);
 	if (!parent) return;
 	if (parent.children.some((c) => c.name === addition.name)) return;
-	const child = buildChild(addition.kind, addition.name, parent.transform.kind);
+	const child = buildChild(addition, parent.transform.kind);
 	if (!child) return;
 	parent.children.push(child);
 };

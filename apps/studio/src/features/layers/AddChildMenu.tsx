@@ -16,6 +16,7 @@ const kindsFor = (parentKind: TransformKind): { kind: NodeKind; label: string }[
 				{ kind: "text", label: "Text" },
 				{ kind: "circle", label: "Circle" },
 				{ kind: "line", label: "Line" },
+				{ kind: "image", label: "Image" },
 				{ kind: "group", label: "Group" },
 			]
 		: [
@@ -23,6 +24,7 @@ const kindsFor = (parentKind: TransformKind): { kind: NodeKind; label: string }[
 				{ kind: "text", label: "Text" },
 				{ kind: "circle", label: "Circle" },
 				{ kind: "line", label: "Line" },
+				{ kind: "image", label: "Image" },
 				{ kind: "group", label: "Group" },
 			];
 

@@ -19,7 +19,7 @@ import { TransformKind } from "../scene/transform.ts";
 import { EasingName } from "../timeline/easing.ts";
 import { TrackKind } from "../timeline/types.ts";
 
-export const CURRENT_SCHEMA_VERSION = 4 as const;
+export const CURRENT_SCHEMA_VERSION = 5 as const;
 
 export const Vec3Schema = tuple([number(), number(), number()]);
 
@@ -94,11 +94,22 @@ export const LineSchema = object({
 	width: number(),
 });
 
+export const ImageSchema = object({
+	id: string(),
+	type: literal(NodeType.Image),
+	name: string(),
+	transform: TransformSchema,
+	src: string(),
+	width: number(),
+	height: number(),
+});
+
 export type RectJSON = InferOutput<typeof RectSchema>;
 export type BoxJSON = InferOutput<typeof BoxSchema>;
 export type TextJSON = InferOutput<typeof TextSchema>;
 export type CircleJSON = InferOutput<typeof CircleSchema>;
 export type LineJSON = InferOutput<typeof LineSchema>;
+export type ImageJSON = InferOutput<typeof ImageSchema>;
 
 export type GroupJSON = {
 	id: string;
@@ -108,7 +119,14 @@ export type GroupJSON = {
 	children: NodeJSON[];
 };
 
-export type NodeJSON = GroupJSON | RectJSON | BoxJSON | TextJSON | CircleJSON | LineJSON;
+export type NodeJSON =
+	| GroupJSON
+	| RectJSON
+	| BoxJSON
+	| TextJSON
+	| CircleJSON
+	| LineJSON
+	| ImageJSON;
 
 const NodeSchemaLazy: GenericSchema<NodeJSON> = lazy(() => NodeSchema);
 
@@ -127,6 +145,7 @@ export const NodeSchema = variant("type", [
 	TextSchema,
 	CircleSchema,
 	LineSchema,
+	ImageSchema,
 ]);
 
 export const Layer2DSchema = object({

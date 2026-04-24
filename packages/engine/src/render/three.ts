@@ -11,6 +11,9 @@ import {
 	MeshStandardMaterial,
 	type Object3D,
 	PerspectiveCamera,
+	PlaneGeometry,
+	type Texture,
+	TextureLoader,
 	Group as ThreeGroup,
 	Line as ThreeLine,
 	Scene as ThreeScene,
@@ -23,6 +26,7 @@ import { Text as TroikaText } from "troika-three-text";
 import type { Box } from "../scene/box.ts";
 import type { Circle } from "../scene/circle.ts";
 import type { Group } from "../scene/group.ts";
+import type { Image } from "../scene/image.ts";
 import type { Scene3DLayer } from "../scene/layer.ts";
 import type { Line } from "../scene/line.ts";
 import type { Node } from "../scene/node.ts";
@@ -120,6 +124,57 @@ const mountCircle3D = (parent: Object3D, circle: Circle, markDirty: () => void):
 	bindTransform3D(mesh, circle.transform, markDirty);
 };
 
+const mountImage3D = (
+	parent: Object3D,
+	image: Image,
+	markDirty: () => void,
+	pending: Set<Promise<unknown>>,
+): void => {
+	if (image.transform.kind !== "3d") return;
+	// Outer group carries transform.scale; inner mesh carries width/height as scale on a unit plane.
+	const wrapper = new ThreeGroup();
+	parent.add(wrapper);
+	const geometry = new PlaneGeometry(1, 1);
+	const material = new MeshBasicMaterial({ transparent: true });
+	const mesh = new Mesh(geometry, material);
+	mesh.visible = false;
+	wrapper.add(mesh);
+	const loader = new TextureLoader();
+	let currentTexture: Texture | null = null;
+	createEffect(() => {
+		const url = image.src.get();
+		mesh.visible = false;
+		const load = loader.loadAsync(url).then(
+			(texture) => {
+				if (image.src.get() !== url) {
+					texture.dispose();
+					return;
+				}
+				if (currentTexture) currentTexture.dispose();
+				currentTexture = texture;
+				material.map = texture;
+				material.needsUpdate = true;
+				mesh.visible = true;
+				markDirty();
+			},
+			() => {
+				mesh.visible = false;
+			},
+		);
+		pending.add(load);
+		load.finally(() => pending.delete(load));
+	});
+	createEffect(() => {
+		mesh.scale.set(image.width.get(), image.height.get(), 1);
+		markDirty();
+	});
+	createEffect(() => {
+		material.opacity = image.transform.opacity.get();
+		markDirty();
+	});
+	bindTransform3D(wrapper, image.transform, markDirty);
+};
+
 const mountLine3D = (parent: Object3D, line: Line, markDirty: () => void): void => {
 	if (line.transform.kind !== "3d") return;
 	const material = new LineBasicMaterial({ color: 0xffffff, transparent: true });
@@ -143,14 +198,24 @@ const mountLine3D = (parent: Object3D, line: Line, markDirty: () => void): void 
 	bindTransform3D(mesh, line.transform, markDirty);
 };
 
-const mountGroup3D = (parent: Object3D, group: Group, markDirty: () => void): void => {
+const mountGroup3D = (
+	parent: Object3D,
+	group: Group,
+	markDirty: () => void,
+	pending: Set<Promise<unknown>>,
+): void => {
 	const threeGroup = new ThreeGroup();
 	parent.add(threeGroup);
 	if (group.transform.kind === "3d") bindTransform3D(threeGroup, group.transform, markDirty);
-	for (const child of group.children) mountNode3D(threeGroup, child, markDirty);
+	for (const child of group.children) mountNode3D(threeGroup, child, markDirty, pending);
 };
 
-const mountNode3D = (parent: Object3D, node: Node, markDirty: () => void): void => {
+const mountNode3D = (
+	parent: Object3D,
+	node: Node,
+	markDirty: () => void,
+	pending: Set<Promise<unknown>>,
+): void => {
 	switch (node.type) {
 		case NodeType.Box:
 			mountBox(parent, node, markDirty);
@@ -164,8 +229,11 @@ const mountNode3D = (parent: Object3D, node: Node, markDirty: () => void): void 
 		case NodeType.Line:
 			mountLine3D(parent, node, markDirty);
 			return;
+		case NodeType.Image:
+			mountImage3D(parent, node, markDirty, pending);
+			return;
 		case NodeType.Group:
-			mountGroup3D(parent, node, markDirty);
+			mountGroup3D(parent, node, markDirty, pending);
 			return;
 		default:
 			return;
@@ -179,6 +247,7 @@ export const createThreeLayerRenderer = (options: CreateLayerRendererOptions): L
 	}
 	const layer3d = layer as Scene3DLayer;
 	const canvas = document.createElement("canvas");
+	const pending = new Set<Promise<unknown>>();
 	let renderer: ThreeRenderer | null = null;
 	let scene3d: ThreeScene | null = null;
 	let camera: PerspectiveCamera | null = null;
@@ -232,7 +301,7 @@ export const createThreeLayerRenderer = (options: CreateLayerRendererOptions): L
 		createRoot((dispose) => {
 			disposeRoot = dispose;
 			bindTransform3D(layerRoot, layer3d.transform, markDirty);
-			for (const child of layer3d.children) mountNode3D(layerRoot, child, markDirty);
+			for (const child of layer3d.children) mountNode3D(layerRoot, child, markDirty, pending);
 		});
 
 		markDirty();
@@ -254,6 +323,12 @@ export const createThreeLayerRenderer = (options: CreateLayerRendererOptions): L
 		dirty = false;
 	};
 
+	const ready = async (): Promise<void> => {
+		while (pending.size > 0) {
+			await Promise.allSettled(Array.from(pending));
+		}
+	};
+
 	const dispose = (): void => {
 		if (rafId !== null) {
 			cancelAnimationFrame(rafId);
@@ -271,5 +346,5 @@ export const createThreeLayerRenderer = (options: CreateLayerRendererOptions): L
 		camera = null;
 	};
 
-	return { canvas, mount, setSize, renderFrame, dispose };
+	return { canvas, mount, setSize, renderFrame, ready, dispose };
 };

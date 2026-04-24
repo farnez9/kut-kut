@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { CURRENT_SCHEMA_VERSION, deserialize, serialize } from "../src/project/index.ts";
 import {
 	createCircle,
+	createImage,
 	createLayer2D,
 	createLayer3D,
 	createLine,
@@ -50,6 +51,14 @@ const scenePrimitives2D = (): Scene =>
 						color: [0, 0.5, 1],
 						width: 3,
 					}),
+					createImage({
+						id: "img1",
+						name: "Sprite",
+						transform: createTransform2D({ x: 0, y: 30 }),
+						src: "assets/sprite.png",
+						width: 240,
+						height: 160,
+					}),
 				],
 			}),
 		],
@@ -84,6 +93,14 @@ const scenePrimitives3D = (): Scene =>
 							[0, 0, 50],
 						],
 					}),
+					createImage({
+						id: "img3",
+						name: "Plane",
+						transform: createTransform3D({ position: [0, 0, 0] }),
+						src: "assets/sprite.png",
+						width: 4,
+						height: 3,
+					}),
 				],
 			}),
 		],
@@ -100,6 +117,7 @@ describe("primitives (text/circle/line) roundtrip", () => {
 			NodeType.Text,
 			NodeType.Circle,
 			NodeType.Line,
+			NodeType.Image,
 		]);
 		const second = serialize(rebuilt.scene, rebuilt.timeline);
 		expect(second).toEqual(first);
@@ -115,18 +133,19 @@ describe("primitives (text/circle/line) roundtrip", () => {
 			NodeType.Text,
 			NodeType.Circle,
 			NodeType.Line,
+			NodeType.Image,
 		]);
 		const second = serialize(rebuilt.scene, rebuilt.timeline);
 		expect(second).toEqual(first);
 	});
 
-	test("migrateV3ToV4 is a no-op over payload structure", () => {
-		const v4 = serialize(scenePrimitives2D());
-		const v3 = { ...v4, schemaVersion: 3 };
-		const rebuilt = deserialize(v3);
+	test("migrateV4ToV5 is a no-op over payload structure", () => {
+		const v5 = serialize(scenePrimitives2D());
+		const v4 = { ...v5, schemaVersion: 4 };
+		const rebuilt = deserialize(v4);
 		const reserialized = serialize(rebuilt.scene, rebuilt.timeline);
 		expect(reserialized.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
-		expect(reserialized.scene).toEqual(v4.scene);
+		expect(reserialized.scene).toEqual(v5.scene);
 	});
 
 	test("line with fewer than 2 points throws at factory", () => {

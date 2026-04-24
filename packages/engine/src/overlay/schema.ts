@@ -28,12 +28,23 @@ export const PropertyOverrideSchema = object({
 	value: OverrideValueSchema,
 });
 
-export const NodeKindSchema = picklist(["rect", "box", "group", "text", "circle", "line"] as const);
+export const NodeKindSchema = picklist([
+	"rect",
+	"box",
+	"group",
+	"text",
+	"circle",
+	"line",
+	"image",
+] as const);
 
 export const NodeAdditionSchema = object({
 	parentPath: pipe(array(string()), minLength(1)),
 	name: pipe(string(), minLength(1)),
 	kind: NodeKindSchema,
+	src: optional(string()),
+	width: optional(number()),
+	height: optional(number()),
 });
 
 export const NodeDeletionSchema = object({

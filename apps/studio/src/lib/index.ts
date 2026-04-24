@@ -8,6 +8,7 @@ export {
 	useCommands,
 } from "./commands/index.ts";
 export { type HotkeyCombo, registerHotkey } from "./hotkeys.ts";
+export { pickFile } from "./pick-file.ts";
 export {
 	type AssetRef,
 	listProjects,

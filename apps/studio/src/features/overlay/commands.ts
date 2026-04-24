@@ -62,6 +62,9 @@ export type AdditionSpec = {
 	parentPath: string[];
 	name: string;
 	kind: NodeKind;
+	src?: string;
+	width?: number;
+	height?: number;
 };
 
 export const addNodeCommand = (mutate: OverlayMutator, addition: AdditionSpec): Command => {
@@ -75,6 +78,9 @@ export const addNodeCommand = (mutate: OverlayMutator, addition: AdditionSpec): 
 				parentPath: [...addition.parentPath],
 				name: addition.name,
 				kind: addition.kind,
+				...(addition.src !== undefined ? { src: addition.src } : {}),
+				...(addition.width !== undefined ? { width: addition.width } : {}),
+				...(addition.height !== undefined ? { height: addition.height } : {}),
 			});
 		});
 	};

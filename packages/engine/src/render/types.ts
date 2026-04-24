@@ -6,6 +6,7 @@ export type LayerRenderer = {
 	mount: (host: HTMLElement) => Promise<void>;
 	setSize: (width: number, height: number) => void;
 	renderFrame: () => void;
+	ready: () => Promise<void>;
 	dispose: () => void;
 };
 
